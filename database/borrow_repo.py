@@ -18,8 +18,9 @@ def find_active_by_equipment(equipment_id: int) -> sqlite3.Row | None:
 
 def find_all_active() -> list[sqlite3.Row]:
     return fetch_all(
-        """SELECT bh.id, bh.equipment_id, bh.borrower_name, bh.borrow_date,
-                  bh.expected_return_date, bh.actual_return_date, bh.notes,
+        """SELECT bh.id, bh.equipment_id, bh.borrower_name, bh.borrower_phone,
+                  bh.borrow_date, bh.expected_return_date, bh.actual_return_date,
+                  bh.notes,
                   COALESCE(bh.asset_code, e.asset_code, '') AS asset_code,
                   COALESCE(bh.equipment_name, e.name, '') AS equipment_name
            FROM borrow_history bh
@@ -38,8 +39,9 @@ def find_by_equipment(equipment_id: int) -> list[sqlite3.Row]:
 
 def find_all() -> list[sqlite3.Row]:
     return fetch_all(
-        """SELECT bh.id, bh.equipment_id, bh.borrower_name, bh.borrow_date,
-                  bh.expected_return_date, bh.actual_return_date, bh.notes,
+        """SELECT bh.id, bh.equipment_id, bh.borrower_name, bh.borrower_phone,
+                  bh.borrow_date, bh.expected_return_date, bh.actual_return_date,
+                  bh.notes,
                   COALESCE(bh.asset_code, e.asset_code, '') AS asset_code,
                   COALESCE(bh.equipment_name, e.name, '') AS equipment_name
            FROM borrow_history bh

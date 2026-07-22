@@ -106,6 +106,23 @@ def delete_equipment(equipment_id: int) -> None:
     equipment_repo.delete_equipment(equipment_id)
 
 
+def delete_multiple(equipment_ids: list[int]) -> tuple[int, list[dict]]:
+    """Delete multiple equipment items. Returns (deleted_count, skipped_items)."""
+    deleted = 0
+    skipped = []
+    for eid in equipment_ids:
+        existing = equipment_repo.find_by_id(eid)
+        if not existing:
+            continue
+        active = borrow_repo.find_active_by_equipment(eid)
+        if active:
+            skipped.append({"asset_code": existing["asset_code"], "name": existing["name"]})
+        else:
+            equipment_repo.delete_equipment(eid)
+            deleted += 1
+    return deleted, skipped
+
+
 def get_categories() -> list[str]:
     return equipment_repo.find_distinct_categories()
 

@@ -10,6 +10,7 @@ from database.db import get_db
 def borrow_equipment(
     equipment_id: int,
     borrower_name: str,
+    borrower_phone: str,
     borrow_date: str,
     expected_return_date: str,
     notes: str = "",
@@ -39,6 +40,7 @@ def borrow_equipment(
     record_data = {
         "equipment_id": equipment_id,
         "borrower_name": borrower_name.strip(),
+        "borrower_phone": borrower_phone.strip(),
         "borrow_date": borrow_date,
         "expected_return_date": expected_return_date,
         "notes": notes.strip(),
@@ -49,12 +51,13 @@ def borrow_equipment(
     with get_db() as conn:
         cursor = conn.execute(
             """INSERT INTO borrow_history
-               (equipment_id, borrower_name, borrow_date, expected_return_date, notes,
-                asset_code, equipment_name)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+               (equipment_id, borrower_name, borrower_phone, borrow_date,
+                expected_return_date, notes, asset_code, equipment_name)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 record_data["equipment_id"],
                 record_data["borrower_name"],
+                record_data["borrower_phone"],
                 record_data["borrow_date"],
                 record_data["expected_return_date"],
                 record_data["notes"],
@@ -95,3 +98,29 @@ def get_active_borrows() -> list[sqlite3.Row]:
 
 def get_active_borrow_for(equipment_id: int) -> sqlite3.Row | None:
     return borrow_repo.find_active_by_equipment(equipment_id)
+
+
+def borrow_multiple(
+    equipment_ids: list[int],
+    borrower_name: str,
+    borrower_phone: str,
+    borrow_date: str,
+    expected_return_date: str,
+    notes: str = "",
+) -> tuple[int, list[dict]]:
+    """Borrow multiple equipment items. Returns (borrowed_count, skipped_items)."""
+    borrowed = 0
+    skipped = []
+    for eid in equipment_ids:
+        try:
+            borrow_equipment(eid, borrower_name, borrower_phone, borrow_date, expected_return_date, notes)
+            borrowed += 1
+        except ValueError as e:
+            equipment = equipment_repo.find_by_id(eid)
+            if equipment:
+                skipped.append({
+                    "asset_code": equipment["asset_code"],
+                    "name": equipment["name"],
+                    "reason": str(e),
+                })
+    return borrowed, skipped

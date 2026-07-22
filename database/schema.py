@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS borrow_history (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     equipment_id        INTEGER NOT NULL,
     borrower_name       TEXT    NOT NULL,
+    borrower_phone      TEXT    DEFAULT '',
     borrow_date         TEXT    NOT NULL,
     expected_return_date TEXT   NOT NULL,
     actual_return_date  TEXT    DEFAULT NULL,
@@ -49,6 +50,7 @@ CREATE TABLE IF NOT EXISTS _borrow_history_new (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     equipment_id        INTEGER NOT NULL,
     borrower_name       TEXT    NOT NULL,
+    borrower_phone      TEXT    DEFAULT '',
     borrow_date         TEXT    NOT NULL,
     expected_return_date TEXT   NOT NULL,
     actual_return_date  TEXT    DEFAULT NULL,
@@ -60,9 +62,9 @@ CREATE TABLE IF NOT EXISTS _borrow_history_new (
 
 INSERT INTO _borrow_history_new
     (id, equipment_id, borrower_name, borrow_date, expected_return_date,
-     actual_return_date, notes, created_at)
+     actual_return_date, notes, asset_code, equipment_name, created_at)
 SELECT id, equipment_id, borrower_name, borrow_date, expected_return_date,
-       actual_return_date, notes, created_at
+       actual_return_date, notes, asset_code, equipment_name, created_at
 FROM borrow_history;
 
 DROP TABLE borrow_history;
@@ -71,10 +73,10 @@ ALTER TABLE _borrow_history_new RENAME TO borrow_history;
 
 
 def _needs_migration(conn: sqlite3.Connection) -> bool:
-    """Check if borrow_history table needs migration (missing asset_code column)."""
+    """Check if borrow_history table needs migration (missing borrower_phone column)."""
     cursor = conn.execute("PRAGMA table_info(borrow_history)")
     columns = [row[1] for row in cursor.fetchall()]
-    return "asset_code" not in columns
+    return "borrower_phone" not in columns
 
 
 def get_connection() -> sqlite3.Connection:

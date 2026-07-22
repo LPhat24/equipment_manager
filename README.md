@@ -32,7 +32,7 @@ cd equipment_manager
 pip install -r requirements.txt
 
 # Run the application
-streamlit run app.py
+streamlit run App.py
 ```
 
 The app opens at `http://localhost:8501`.
@@ -43,7 +43,7 @@ On first run, go to **⚙️ Settings** and click **Initialize Database**, then 
 
 ```
 equipment_manager/
-├── app.py                      # Main entry point
+├── App.py                      # Main entry point
 ├── pages/                      # Streamlit multipage navigation
 │   ├── Equipment.py            # Browse, search, filter, add, borrow, return
 │   ├── Borrow_Return.py        # Active borrows, quick return, borrow form

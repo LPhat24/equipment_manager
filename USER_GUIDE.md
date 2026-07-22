@@ -14,7 +14,8 @@ A complete guide for using the Lab Equipment Manager web application.
    - 4.2 [Borrow & Return Page](#42-borrow--return-page-)
    - 4.3 [Dashboard Page](#43-dashboard-page-)
    - 4.4 [History Page](#44-history-page-)
-   - 4.5 [Settings Page](#45-settings-page-️)
+   - 4.5 [Overdue Page](#45-overdue-page-)
+   - 4.6 [Settings Page](#46-settings-page-️)
 5. [Reference](#5-reference)
 
 ---
@@ -79,7 +80,7 @@ pip install -r requirements.txt
 **Step 3:** Start the application
 
 ```bash
-python -m streamlit run app.py
+python -m streamlit run App.py
 ```
 
 **Step 4:** Your web browser will automatically open a new tab at `http://localhost:8501`
@@ -101,7 +102,7 @@ After the first-time setup, you only need to run:
 
 ```bash
 cd "D:\Project D disk\Tool\equipment_manager"
-python -m streamlit run app.py
+python -m streamlit run App.py
 ```
 
 Then open your browser to `http://localhost:8501`.
@@ -125,6 +126,7 @@ The sidebar contains navigation links to all pages:
 | 🔄 | **Borrow & Return** | View active borrows and process returns |
 | 📊 | **Dashboard** | Statistics and charts |
 | 📜 | **History** | Full timeline of all borrow records |
+| ⚠ | **Overdue** | View overdue equipment and borrower contact list |
 | ⚙️ | **Settings** | Import/export data and manage database |
 
 ### Main Content Area
@@ -135,6 +137,7 @@ The right side of the screen displays the content of whichever page you have sel
 
 The home page shows:
 - **Quick stats** — Total items, Available, Borrowed, and Maintenance counts
+- **Overdue warning** — If any items are overdue, a yellow banner shows the count and total days overdue with a link to the Overdue page
 - **Pages table** — A summary of what each page does
 
 ---
@@ -209,6 +212,7 @@ The **"➕ Add New Equipment"** form is always visible at the top of the Equipme
 2. A borrow form will appear below the table
 3. Fill in:
    - **Borrower Name** (required) — Name of the person borrowing the equipment
+   - **Borrower Phone** (required) — Contact phone number
    - **Borrow Date** — Defaults to today
    - **Expected Return Date** — Defaults to 7 days from today
    - **Notes** (optional) — Any additional information
@@ -222,6 +226,24 @@ The **"➕ Add New Equipment"** form is always visible at the top of the Equipme
 3. Click **"Return Equipment"**
 4. The equipment status automatically changes back to "Available"
 
+#### Borrow Multiple Items (Bulk Borrow)
+
+1. Hold `Ctrl` (or `Shift`) and click multiple rows in the equipment table
+2. A **"📦 Bulk Borrow"** section will appear below the table
+3. The section shows:
+   - ✅ Items available to borrow (status = "Available")
+   - ❌ Items skipped (status = "Borrowed" or "Maintenance")
+4. Fill in the shared borrow details:
+   - **Borrower Name** (required) — applies to all selected items
+   - **Borrower Phone** (required) — applies to all selected items
+   - **Borrow Date** — defaults to today
+   - **Expected Return Date** — defaults to 7 days from today
+   - **Notes** (optional) — applies to all selected items
+5. Click **"Confirm Borrow X Equipment"**
+6. A success message shows how many items were borrowed and which were skipped
+
+> **Note:** All selected items are borrowed by the same person with the same dates. If you need different dates or borrowers, borrow items one at a time instead.
+
 #### Maintenance Items
 
 If an item is marked as **Maintenance**, no borrow or return actions are available. You will see a warning message. To make it available again, you must update its status through the database or re-add it.
@@ -230,7 +252,9 @@ If an item is marked as **Maintenance**, no borrow or return actions are availab
 
 You can permanently delete equipment from the system. **Borrow history records are preserved** — the asset code and equipment name are saved in each borrow record at the time of borrowing, so your history remains complete even after the equipment is deleted.
 
-**Steps:**
+You can delete **one item at a time** or **multiple items at once**.
+
+##### Delete a Single Item
 
 1. Click on the equipment row you want to delete in the table
 2. Scroll down to the **"Delete [Asset Code]"** section in the action panel
@@ -239,6 +263,17 @@ You can permanently delete equipment from the system. **Borrow history records a
 5. Check the box **"I confirm I want to delete this equipment permanently"**
 6. Click **"Delete Equipment"**
 7. A success message confirms the deletion
+
+##### Delete Multiple Items (Bulk Delete)
+
+1. Click on multiple rows in the equipment table (hold `Ctrl` or `Shift` to select multiple)
+2. A **"🗑️ Bulk Delete"** section will appear below the table
+3. The section shows:
+   - ✅ Items that can be deleted (no active borrows)
+   - ❌ Items that are skipped (have active borrows)
+4. Check the box **"I confirm I want to delete X equipment item(s) permanently"**
+5. Click **"Delete X Equipment"**
+6. A success message confirms how many items were deleted and which were skipped
 
 > **Note:** After deletion, the equipment will no longer appear in the Equipment list or be available for borrowing. However, all past borrow records remain in the History page with the original asset code and equipment name intact.
 
@@ -257,8 +292,10 @@ The top section shows a table of all currently borrowed equipment:
 | **Asset Code** | Equipment identifier |
 | **Equipment** | Equipment name |
 | **Borrower** | Person who borrowed it |
+| **Phone** | Borrower's contact phone number |
 | **Since** | Date when it was borrowed |
 | **Due** | Expected return date |
+| **Days Overdue** | Number of days past due date (empty if not overdue) |
 | **Overdue** | Shows "⚠ Overdue" if past due date |
 
 If any items are overdue, a warning banner appears at the top: **"X item(s) overdue — return requested!"**
@@ -276,6 +313,7 @@ If any items are overdue, a warning banner appears at the top: **"X item(s) over
 2. Fill in the form:
    - **Equipment** (required) — Select from the dropdown list of available items
    - **Borrower Name** (required) — Enter the borrower's name
+   - **Borrower Phone** (required) — Enter the borrower's contact phone number
    - **Borrow Date** — Defaults to today
    - **Expected Return Date** — Defaults to 7 days from today
    - **Notes** (optional) — Any additional information
@@ -303,7 +341,7 @@ Four metric cards at the top show:
 
 #### Overdue Warning
 
-If any items are overdue, a yellow warning banner appears: **"⚠ X item(s) overdue — return requested!"**
+If any items are overdue, a yellow warning banner appears: **"⚠ X item(s) overdue — Y total days overdue!"** with a link to the Overdue page.
 
 #### Charts
 
@@ -321,6 +359,7 @@ A table showing the 10 most recent borrow records with columns:
 | **Asset Code** | Equipment identifier |
 | **Equipment** | Equipment name |
 | **Borrower** | Person who borrowed it |
+| **Phone** | Borrower's contact phone number |
 | **Borrowed** | Date borrowed |
 | **Due** | Expected return date |
 | **Returned** | Actual return date (or "—" if not yet returned) |
@@ -342,7 +381,8 @@ Records are grouped by month in expandable sections. Each section shows the mont
 Each record in the timeline shows:
 
 - **Date and equipment** — e.g., "**2026-07-15** — `EQ-001` Oscilloscope"
-- **Borrower and status** — e.g., "Borrowed by **John** | Due 2026-07-22 — 🔵 Active"
+- **Borrower and status** — e.g., "Borrowed by **John** (📞 0123-456-789) | Due 2026-07-22 — 🔵 Active"
+- **Overdue status** — e.g., "Borrowed by **John** (📞 0123-456-789) | Due 2026-07-15 — ⚠ Overdue (**7 days**)"
 - **Notes** — If any notes were recorded, they appear below
 
 #### Status Icons
@@ -371,7 +411,62 @@ Filters work together with the search bar. You can combine all three to narrow d
 
 ---
 
-### 4.5 Settings Page ⚙️
+### 4.5 Overdue Page ⚠
+
+This page shows all equipment that has not been returned by the expected return date, along with borrower contact information for follow-up.
+
+#### Overdue Items Table
+
+The table displays all overdue borrows, sorted by most overdue first:
+
+| Column | Description |
+|--------|-------------|
+| **Asset Code** | Equipment identifier |
+| **Equipment** | Equipment name |
+| **Borrower** | Person who borrowed it |
+| **Phone** | Borrower's contact phone number |
+| **Borrowed** | Date borrowed |
+| **Due** | Expected return date |
+| **Days Overdue** | Number of days past the due date |
+
+If no items are overdue, you will see: "No overdue equipment — all items returned on time."
+
+#### Contact List
+
+The page provides two formats for follow-up:
+
+**Copy for Messaging:**
+- Formatted text block optimized for WhatsApp, SMS, or messaging apps
+- One entry per person with phone number and equipment details
+- Click the copy button on the code block to copy to clipboard
+- Example format:
+  ```
+  === OVERDUE EQUIPMENT CONTACT LIST ===
+  Date: 2026-07-22
+
+  1. John Doe — 0123-456-789
+     EL-001 Oscilloscope | Due: 2026-07-15 | 7 days overdue
+  ```
+
+**Download for Printing:**
+- Formatted table with date header, suitable for printing
+- Click **"Download Overdue Contact List (.txt)"** to download
+- Print and post on the lab bulletin board
+- Example format:
+  ```
+  =================================================
+   OVERDUE EQUIPMENT — LAB BULLETIN BOARD
+   Generated: 2026-07-22
+  =================================================
+
+  Asset Code   Equipment          Borrower        Phone            Due          Days
+  ------------ ------------------ --------------- ---------------- ------------ -----
+  EL-001       Oscilloscope       John Doe        0123-456-789     2026-07-15   7
+  ```
+
+---
+
+### 4.6 Settings Page ⚙️
 
 This page manages data import/export and database operations.
 
@@ -426,6 +521,17 @@ Download all equipment data as a CSV file for backup or editing.
 
 #### 🗄️ Database
 
+Database operations are password-protected to prevent accidental or unauthorized changes.
+
+**Password:** `admin123`
+
+**Steps:**
+
+1. Enter the password in the password field
+2. Click **"Verify"**
+3. You will see "Password verified" — the database buttons are now accessible
+4. Use the buttons as needed:
+
 | Button | Description |
 |--------|-------------|
 | **Initialize Database** | Creates the database tables if they don't exist. Also runs automatic schema migrations if needed. Safe to run multiple times. |
@@ -437,11 +543,13 @@ Download all equipment data as a CSV file for backup or editing.
 
 > **Warning:** This permanently deletes ALL equipment and borrow history records. This action cannot be undone.
 
-1. Click **"⚠️ Reset Database — Danger Zone"** to expand the section
-2. Read the warning carefully
-3. **Recommended:** Export your data to CSV first
-4. Click **"Confirm Reset — Delete All Data"**
-5. All data will be deleted
+1. Enter the password and click **"Verify"** (if not already verified)
+2. Click **"⚠️ Reset Database — Danger Zone"** to expand the section
+3. Read the warning carefully
+4. **Recommended:** Export your data to CSV first
+5. Check the box **"I confirm I want to delete ALL data permanently"**
+6. Click **"Confirm Reset — Delete All Data"**
+7. All data will be deleted
 
 ---
 
@@ -502,6 +610,27 @@ Categories help group equipment by type for easier filtering and browsing. There
 - Be consistent — pick one name and stick with it
 - You can add new categories anytime as your inventory grows
 
+### Status & Condition Indicators
+
+The Equipment table uses emoji badges to visually distinguish Status and Condition values:
+
+**Status Icons:**
+
+| Icon | Status | Meaning |
+|------|--------|---------|
+| 🟢 | Available | Equipment is in storage and can be borrowed |
+| 🔵 | Borrowed | Equipment is currently loaned out |
+| 🟡 | Maintenance | Equipment is being serviced or repaired |
+
+**Condition Icons:**
+
+| Icon | Condition | Meaning |
+|------|-----------|---------|
+| 🟢 | Good | Equipment is in working order |
+| 🔵 | Fair | Equipment shows minor wear but is functional |
+| 🟠 | Poor | Equipment has significant wear or minor issues |
+| 🔴 | Damaged | Equipment is broken or non-functional |
+
 ### Equipment Fields
 
 | Field | Type | Required | Default | Description |
@@ -549,7 +678,10 @@ The status of a borrow record is automatically determined:
 |-------|------|-------------|
 | `id` | Integer | Unique record identifier (auto-generated) |
 | `equipment_id` | Integer | Reference to the equipment item |
+| `asset_code` | Text | Asset code at time of borrowing (preserved for deleted equipment) |
+| `equipment_name` | Text | Equipment name at time of borrowing (preserved for deleted equipment) |
 | `borrower_name` | Text | Name of the person who borrowed the item |
+| `borrower_phone` | Text | Borrower's contact phone number |
 | `borrow_date` | Text | Date the item was borrowed (YYYY-MM-DD) |
 | `expected_return_date` | Text | Date the item is expected back (YYYY-MM-DD) |
 | `actual_return_date` | Text | Date the item was actually returned (NULL if not yet returned) |

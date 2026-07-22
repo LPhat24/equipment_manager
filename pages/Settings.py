@@ -5,6 +5,8 @@ import io
 from database.schema import init_db
 from services import equipment_service
 
+DB_PASSWORD = "admin123"
+
 st.title("⚙️ Settings")
 
 # --- CSV Import ---
@@ -104,38 +106,58 @@ st.markdown("---")
 # --- Database ---
 st.subheader("🗄️ Database")
 
-db_col1, db_col2 = st.columns(2)
+if "db_password_ok" not in st.session_state:
+    st.session_state["db_password_ok"] = False
 
-with db_col1:
-    if st.button("Initialize Database", use_container_width=True):
-        try:
-            init_db()
-            st.success("Database initialized — tables are ready.")
-        except Exception as e:
-            st.error(f"Initialization failed: {e}")
+if not st.session_state["db_password_ok"]:
+    pwd_col1, pwd_col2 = st.columns([3, 1])
+    with pwd_col1:
+        db_password_input = st.text_input("Enter password to access database operations", type="password")
+    with pwd_col2:
+        st.write("")
+        st.write("")
+        if st.button("Verify", use_container_width=True):
+            if db_password_input == DB_PASSWORD:
+                st.session_state["db_password_ok"] = True
+                st.rerun()
+            else:
+                st.error("Wrong password")
+else:
+    st.success("Password verified")
 
-with db_col2:
-    if st.button("Load Sample Data", use_container_width=True):
-        inserted, errors = equipment_service.load_sample_data()
-        if inserted > 0:
-            st.success(f"Loaded **{inserted}** sample equipment item(s).")
-        if errors:
-            for err in errors:
-                st.text(f"  ✗ {err}")
+    db_col1, db_col2 = st.columns(2)
 
-st.markdown("---")
+    with db_col1:
+        if st.button("Initialize Database", use_container_width=True):
+            try:
+                init_db()
+                st.success("Database initialized — tables are ready.")
+            except Exception as e:
+                st.error(f"Initialization failed: {e}")
 
-# --- Danger Zone ---
-with st.expander("⚠️ Reset Database — Danger Zone"):
-    st.warning(
-        "This will **permanently delete** ALL equipment and borrow history records. "
-        "This action cannot be undone."
-    )
-    st.caption("Tip: Export your data to CSV first before resetting.")
+    with db_col2:
+        if st.button("Load Sample Data", use_container_width=True):
+            inserted, errors = equipment_service.load_sample_data()
+            if inserted > 0:
+                st.success(f"Loaded **{inserted}** sample equipment item(s).")
+            if errors:
+                for err in errors:
+                    st.text(f"  ✗ {err}")
 
-    if st.button("Confirm Reset — Delete All Data", type="primary"):
-        try:
-            equipment_service.reset_all_data()
-            st.success("All data has been deleted.")
-        except Exception as e:
-            st.error(f"Reset failed: {e}")
+    st.markdown("---")
+
+    # --- Danger Zone ---
+    with st.expander("⚠️ Reset Database — Danger Zone"):
+        st.warning(
+            "This will **permanently delete** ALL equipment and borrow history records. "
+            "This action cannot be undone."
+        )
+        st.caption("Tip: Export your data to CSV first before resetting.")
+
+        reset_confirm = st.checkbox("I confirm I want to delete ALL data permanently")
+        if st.button("Confirm Reset — Delete All Data", type="primary", disabled=not reset_confirm):
+            try:
+                equipment_service.reset_all_data()
+                st.success("All data has been deleted.")
+            except Exception as e:
+                st.error(f"Reset failed: {e}")

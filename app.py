@@ -1,7 +1,8 @@
 import streamlit as st
+from datetime import date
 
 from database.schema import init_db
-from services import history_service
+from services import history_service, borrow_service
 
 st.set_page_config(
     page_title="Lab Equipment Manager",
@@ -29,6 +30,27 @@ except Exception:
     init_db()
     st.info("Database initialized. Navigate to **⚙️ Settings** to load sample data.")
 
+# --- Overdue Warning ---
+try:
+    active_borrows = borrow_service.get_active_borrows()
+    today = date.today()
+    today_str = today.isoformat()
+    overdue_items = [
+        r for r in active_borrows
+        if r["expected_return_date"] < today_str
+    ]
+    if overdue_items:
+        total_days = sum(
+            (today - date.fromisoformat(r["expected_return_date"])).days
+            for r in overdue_items
+        )
+        st.warning(
+            f"⚠ **{len(overdue_items)}** item(s) overdue — **{total_days}** total days overdue! "
+            f"Go to [⚠ Overdue](/Overdue) to view contact list."
+        )
+except Exception:
+    pass
+
 st.markdown("---")
 
 # --- Page Guide ---
@@ -41,5 +63,6 @@ st.markdown("""
 | **🔄 Borrow & Return** | View active borrows, process returns, borrow available items |
 | **📊 Dashboard** | Overview statistics, category/location charts, recent activity |
 | **📜 History** | Timeline of all borrow records with search and filters |
+| **⚠ Overdue** | View overdue equipment and borrower contact list |
 | **⚙️ Settings** | Import/export CSV, load sample data, manage database |
 """)

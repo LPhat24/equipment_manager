@@ -20,12 +20,17 @@ else:
     rows = []
     for record in active_borrows:
         status = get_status(record, today_str)
+        days_overdue = ""
+        if status == "Overdue":
+            days_overdue = str((today - date.fromisoformat(record["expected_return_date"])).days)
         rows.append({
             "asset_code": record["asset_code"],
             "equipment_name": record["equipment_name"],
             "borrower": record["borrower_name"],
+            "phone": record["borrower_phone"],
             "borrowed_since": record["borrow_date"],
             "expected_return": record["expected_return_date"],
+            "days_overdue": days_overdue,
             "overdue": "⚠ Overdue" if status == "Overdue" else "",
             "_id": record["id"],
         })
@@ -35,7 +40,7 @@ else:
         st.warning(f"{overdue_count} item(s) overdue — return requested!")
 
     display = [
-        {k: r[k] for k in ["asset_code", "equipment_name", "borrower", "borrowed_since", "expected_return", "overdue"]}
+        {k: r[k] for k in ["asset_code", "equipment_name", "borrower", "phone", "borrowed_since", "expected_return", "days_overdue", "overdue"]}
         for r in rows
     ]
     st.dataframe(
@@ -44,8 +49,10 @@ else:
             "asset_code": st.column_config.TextColumn("Asset Code", width="small"),
             "equipment_name": st.column_config.TextColumn("Equipment", width="medium"),
             "borrower": st.column_config.TextColumn("Borrower", width="medium"),
+            "phone": st.column_config.TextColumn("Phone", width="small"),
             "borrowed_since": st.column_config.TextColumn("Since", width="small"),
             "expected_return": st.column_config.TextColumn("Due", width="small"),
+            "days_overdue": st.column_config.TextColumn("Days Overdue", width="small"),
             "overdue": st.column_config.TextColumn("", width="small"),
         },
         use_container_width=True,
@@ -101,6 +108,7 @@ else:
         selected_equip = st.selectbox("Equipment *", equip_options, index=None, placeholder="Select equipment...")
 
         borrower_name = st.text_input("Borrower Name *")
+        borrower_phone = st.text_input("Borrower Phone *")
 
         fc1, fc2 = st.columns(2)
         with fc1:
@@ -115,11 +123,14 @@ else:
                 st.error("Please select equipment.")
             elif not borrower_name.strip():
                 st.error("Please enter borrower name.")
+            elif not borrower_phone.strip():
+                st.error("Please enter borrower phone.")
             else:
                 try:
                     borrow_service.borrow_equipment(
                         equipment_id=equip_id_map[selected_equip],
                         borrower_name=borrower_name,
+                        borrower_phone=borrower_phone,
                         borrow_date=borrow_date.isoformat(),
                         expected_return_date=expected_return.isoformat(),
                         notes=notes,

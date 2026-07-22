@@ -83,15 +83,19 @@ for month_key in sorted(monthly.keys(), reverse=True):
 
             equip_info = f"`{record['asset_code']}` {record['equipment_name']}"
             borrower = record["borrower_name"]
+            phone = record["borrower_phone"]
             borrow_date = record["borrow_date"]
             due = record["expected_return_date"]
             returned = record["actual_return_date"]
 
             line1 = f"**{borrow_date}** — {equip_info}"
-            line2 = f"Borrowed by **{borrower}** | Due {due}"
+            line2 = f"Borrowed by **{borrower}** (📞 {phone}) | Due {due}"
 
             if returned:
                 line2 += f" — {icon} {status} ({returned})"
+            elif status == "Overdue":
+                days_overdue = (date.today() - date.fromisoformat(due)).days
+                line2 += f" — {icon} {status} (**{days_overdue} days**)"
             else:
                 line2 += f" — {icon} {status}"
 
