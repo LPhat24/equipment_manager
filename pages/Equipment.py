@@ -136,7 +136,8 @@ else:
                 with form_col1:
                     borrow_date = st.date_input("Borrow Date", value=date.today())
                 with form_col2:
-                    expected_return = st.date_input("Expected Return Date", value=date.today() + timedelta(days=7))
+                    max_return = borrow_date + timedelta(days=90)
+                    expected_return = st.date_input("Expected Return Date", value=min(date.today() + timedelta(days=7), max_return), max_value=max_return)
                 notes = st.text_area("Notes", height=68)
 
                 if st.form_submit_button("Confirm Borrow", type="primary"):
@@ -231,7 +232,8 @@ else:
                 with bc1:
                     borrow_date = st.date_input("Borrow Date", value=date.today())
                 with bc2:
-                    expected_return = st.date_input("Expected Return Date", value=date.today() + timedelta(days=7))
+                    max_return = borrow_date + timedelta(days=90)
+                    expected_return = st.date_input("Expected Return Date", value=min(date.today() + timedelta(days=7), max_return), max_value=max_return)
                 notes = st.text_area("Notes", height=68)
 
                 if st.form_submit_button(f"Confirm Borrow {len(borrowable)} Equipment", type="primary"):

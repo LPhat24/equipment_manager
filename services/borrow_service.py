@@ -35,6 +35,8 @@ def borrow_equipment(
 
     if expected_return_date < borrow_date:
         raise ValueError("Expected return date must be on or after borrow date")
+    if (date.fromisoformat(expected_return_date) - date.fromisoformat(borrow_date)).days > 90:
+        raise ValueError("Borrow duration cannot exceed 90 days")
 
     record_data = {
         "equipment_id": equipment_id,
