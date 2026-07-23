@@ -141,10 +141,10 @@ else:
                 notes = st.text_area("Notes", height=68)
 
                 if st.form_submit_button("Confirm Borrow", type="primary"):
-                    if not borrower_name.strip():
-                        st.error("Please enter borrower name.")
-                    elif not borrower_phone.strip():
-                        st.error("Please enter borrower phone.")
+                    if len(borrower_name.strip()) < 2:
+                        st.error("Name must be at least 2 characters.")
+                    elif len(borrower_phone.strip().replace("-", "").replace(" ", "")) < 8:
+                        st.error("Phone must be at least 8 digits.")
                     else:
                         try:
                             borrow_service.borrow_equipment(
@@ -237,10 +237,10 @@ else:
                 notes = st.text_area("Notes", height=68)
 
                 if st.form_submit_button(f"Confirm Borrow {len(borrowable)} Equipment", type="primary"):
-                    if not borrower_name.strip():
-                        st.error("Please enter borrower name.")
-                    elif not borrower_phone.strip():
-                        st.error("Please enter borrower phone.")
+                    if len(borrower_name.strip()) < 2:
+                        st.error("Name must be at least 2 characters.")
+                    elif len(borrower_phone.strip().replace("-", "").replace(" ", "")) < 8:
+                        st.error("Phone must be at least 8 digits.")
                     else:
                         ids_to_borrow = [item["id"] for item in borrowable]
                         borrowed, skipped = borrow_service.borrow_multiple(

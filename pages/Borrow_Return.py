@@ -124,10 +124,10 @@ else:
         if st.form_submit_button("Confirm Borrow", type="primary"):
             if not selected_equip:
                 st.error("Please select equipment.")
-            elif not borrower_name.strip():
-                st.error("Please enter borrower name.")
-            elif not borrower_phone.strip():
-                st.error("Please enter borrower phone.")
+            elif len(borrower_name.strip()) < 2:
+                st.error("Name must be at least 2 characters.")
+            elif len(borrower_phone.strip().replace("-", "").replace(" ", "")) < 8:
+                st.error("Phone must be at least 8 digits.")
             else:
                 try:
                     borrow_service.borrow_equipment(

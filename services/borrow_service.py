@@ -16,6 +16,13 @@ def borrow_equipment(
 ) -> int:
     if not borrower_name.strip():
         raise ValueError("Borrower name is required")
+    if len(borrower_name.strip()) < 2:
+        raise ValueError("Borrower name must be at least 2 characters")
+    if not borrower_phone.strip():
+        raise ValueError("Borrower phone is required")
+    digits_only = borrower_phone.strip().replace("-", "").replace(" ", "")
+    if len(digits_only) < 8 or not digits_only.isdigit():
+        raise ValueError("Phone number must be at least 8 digits")
     if not borrow_date:
         raise ValueError("Borrow date is required")
     if not expected_return_date:
