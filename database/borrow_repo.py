@@ -84,3 +84,14 @@ def count_active_borrows_for(cur, equipment_id: int) -> int:
     )
     row = cur.fetchone()
     return row["cnt"] if row else 0
+
+
+def sum_active_borrow_quantity_for(cur, equipment_id: int) -> int:
+    cur.execute(
+        """SELECT COALESCE(SUM(borrow_quantity), 0) AS total
+           FROM borrow_history
+           WHERE equipment_id = %s AND actual_return_date IS NULL""",
+        (equipment_id,),
+    )
+    row = cur.fetchone()
+    return row["total"] if row else 0

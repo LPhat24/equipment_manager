@@ -94,8 +94,10 @@ def return_equipment(record_id: int) -> None:
             (today, record_id),
         )
 
-        remaining = borrow_repo.count_active_borrows_for(cur, record["equipment_id"])
-        new_status = "Available" if remaining == 0 else "Borrowed"
+        borrowed_qty = borrow_repo.sum_active_borrow_quantity_for(cur, record["equipment_id"])
+        equip = equipment_repo.find_by_id(record["equipment_id"])
+        new_available = equip["quantity"] - borrowed_qty
+        new_status = "Available" if new_available > 0 else "Borrowed"
         cur.execute(
             "UPDATE equipment SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
             (new_status, record["equipment_id"]),
