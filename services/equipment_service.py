@@ -7,13 +7,13 @@ VALID_CONDITIONS = {"Good", "Fair", "Poor", "Damaged"}
 
 
 def get_all_equipment(
-    category: str | None = None,
+    categories: list[str] | None = None,
     status: str | None = None,
     location: str | None = None,
     search: str | None = None,
 ) -> list[dict]:
     return equipment_repo.find_filtered(
-        category=category, status=status, location=location, search=search
+        categories=categories, status=status, location=location, search=search
     )
 
 

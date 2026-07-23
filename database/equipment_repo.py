@@ -48,7 +48,7 @@ def delete_all() -> int:
 
 
 def find_filtered(
-    category: str | None = None,
+    categories: list[str] | None = None,
     status: str | None = None,
     location: str | None = None,
     search: str | None = None,
@@ -56,9 +56,10 @@ def find_filtered(
     conditions = []
     params: list = []
 
-    if category:
-        conditions.append("category = %s")
-        params.append(category)
+    if categories:
+        placeholders = ", ".join(["%s"] * len(categories))
+        conditions.append(f"category IN ({placeholders})")
+        params.extend(categories)
     if status:
         conditions.append("status = %s")
         params.append(status)

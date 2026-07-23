@@ -47,8 +47,8 @@ col1, col2, col3, col4 = st.columns([3, 2, 2, 2])
 with col1:
     search = st.text_input("Search", placeholder="Search name, asset code, notes...", label_visibility="collapsed")
 with col2:
-    categories = ["All"] + equipment_service.get_categories()
-    category = st.selectbox("Category", categories, label_visibility="collapsed")
+    all_categories = equipment_service.get_categories()
+    categories = st.multiselect("Category", all_categories, label_visibility="collapsed")
 with col3:
     status = st.selectbox("Status", ["All", "Available", "Borrowed", "Maintenance"], label_visibility="collapsed")
 with col4:
@@ -57,8 +57,8 @@ with col4:
 
 # --- Fetch Filtered Equipment ---
 filters = {}
-if category != "All":
-    filters["category"] = category
+if categories:
+    filters["categories"] = categories
 if status != "All":
     filters["status"] = status
 if location != "All":
