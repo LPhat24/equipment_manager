@@ -50,19 +50,20 @@ with col2:
     all_categories = equipment_service.get_categories()
     categories = st.multiselect("Category", all_categories, label_visibility="collapsed")
 with col3:
-    status = st.selectbox("Status", ["All", "Available", "Borrowed", "Maintenance"], label_visibility="collapsed")
+    all_statuses = ["Available", "Borrowed", "Maintenance"]
+    statuses = st.multiselect("Status", all_statuses, label_visibility="collapsed")
 with col4:
-    locations = ["All"] + equipment_service.get_locations()
-    location = st.selectbox("Location", locations, label_visibility="collapsed")
+    all_locations = equipment_service.get_locations()
+    locations = st.multiselect("Location", all_locations, label_visibility="collapsed")
 
 # --- Fetch Filtered Equipment ---
 filters = {}
 if categories:
     filters["categories"] = categories
-if status != "All":
-    filters["status"] = status
-if location != "All":
-    filters["location"] = location
+if statuses:
+    filters["statuses"] = statuses
+if locations:
+    filters["locations"] = locations
 if search:
     filters["search"] = search
 

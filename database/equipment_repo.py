@@ -49,8 +49,8 @@ def delete_all() -> int:
 
 def find_filtered(
     categories: list[str] | None = None,
-    status: str | None = None,
-    location: str | None = None,
+    statuses: list[str] | None = None,
+    locations: list[str] | None = None,
     search: str | None = None,
 ) -> list[dict]:
     conditions = []
@@ -60,12 +60,14 @@ def find_filtered(
         placeholders = ", ".join(["%s"] * len(categories))
         conditions.append(f"category IN ({placeholders})")
         params.extend(categories)
-    if status:
-        conditions.append("status = %s")
-        params.append(status)
-    if location:
-        conditions.append("location = %s")
-        params.append(location)
+    if statuses:
+        placeholders = ", ".join(["%s"] * len(statuses))
+        conditions.append(f"status IN ({placeholders})")
+        params.extend(statuses)
+    if locations:
+        placeholders = ", ".join(["%s"] * len(locations))
+        conditions.append(f"location IN ({placeholders})")
+        params.extend(locations)
     if search:
         conditions.append("(name LIKE %s OR asset_code LIKE %s OR notes LIKE %s)")
         term = f"%{search}%"

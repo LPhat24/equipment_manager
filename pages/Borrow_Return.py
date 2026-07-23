@@ -91,7 +91,7 @@ else:
 st.markdown("---")
 st.subheader("📦 Borrow Equipment")
 
-available = equipment_service.get_all_equipment(status="Available")
+available = equipment_service.get_all_equipment(statuses=["Available"])
 
 if not available:
     st.info("No equipment currently available to borrow.")
