@@ -1,14 +1,28 @@
+import os
+
 import streamlit as st
+from dotenv import load_dotenv
 from datetime import date
 
 from database.schema import init_db
 from services import history_service, borrow_service
+from utils.styling import apply_full_width
+
+load_dotenv()
+
+try:
+    if "DATABASE_URL" in st.secrets:
+        os.environ["DATABASE_URL"] = st.secrets["DATABASE_URL"]
+except Exception:
+    pass
 
 st.set_page_config(
     page_title="Lab Equipment Manager",
     page_icon="🔬",
     layout="wide",
 )
+
+apply_full_width()
 
 st.title("🔬 Lab Equipment Manager")
 
@@ -27,8 +41,11 @@ try:
     col3.metric("Borrowed", stats["borrowed"])
     col4.metric("Maintenance", stats["maintenance"])
 except Exception:
-    init_db()
-    st.info("Database initialized. Navigate to **⚙️ Settings** to load sample data.")
+    try:
+        init_db()
+        st.info("Database initialized. Navigate to **⚙️ Settings** to load sample data.")
+    except Exception as e:
+        st.error(f"Could not connect to database. Check your DATABASE_URL. Error: {e}")
 
 # --- Overdue Warning ---
 try:

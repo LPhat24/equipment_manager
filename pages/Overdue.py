@@ -2,6 +2,9 @@ import streamlit as st
 from datetime import date
 
 from services import borrow_service
+from utils.styling import apply_full_width
+
+apply_full_width()
 
 st.title("⚠ Overdue Equipment")
 

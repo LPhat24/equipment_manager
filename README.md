@@ -17,9 +17,9 @@ Built for university engineering labs — simple, fast, and easy to maintain.
 ## Tech Stack
 
 - **Frontend:** Streamlit
-- **Database:** SQLite (zero configuration)
+- **Database:** PostgreSQL (Neon serverless)
 - **Language:** Python 3.12+
-- **Dependencies:** Streamlit only (SQLite is in Python stdlib)
+- **Dependencies:** Streamlit, psycopg2, python-dotenv
 
 ## Setup
 
@@ -76,7 +76,7 @@ Business Layer (services/)     →  Validation, workflows, rules
         ↓
 Data Layer (database/)         →  SQL queries, CRUD, connection management
         ↓
-SQLite (database/database.db)  →  File-based storage
+PostgreSQL (Neon serverless)    →  Cloud-hosted, shared across users
 ```
 
 - Pages only communicate with services

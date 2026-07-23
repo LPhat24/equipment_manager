@@ -6,6 +6,9 @@ from datetime import date
 
 from services import history_service, equipment_service, borrow_service
 from utils.helpers import get_status
+from utils.styling import apply_full_width
+
+apply_full_width()
 
 st.title("📊 Dashboard")
 

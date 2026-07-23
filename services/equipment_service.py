@@ -1,7 +1,5 @@
 """Equipment business logic — validation, CRUD, and filtering."""
 
-import sqlite3
-
 from database import equipment_repo, borrow_repo
 
 VALID_STATUSES = {"Available", "Borrowed", "Maintenance"}
@@ -13,13 +11,13 @@ def get_all_equipment(
     status: str | None = None,
     location: str | None = None,
     search: str | None = None,
-) -> list[sqlite3.Row]:
+) -> list[dict]:
     return equipment_repo.find_filtered(
         category=category, status=status, location=location, search=search
     )
 
 
-def get_equipment(equipment_id: int) -> sqlite3.Row:
+def get_equipment(equipment_id: int) -> dict:
     item = equipment_repo.find_by_id(equipment_id)
     if not item:
         raise ValueError("Equipment not found")
@@ -107,7 +105,6 @@ def delete_equipment(equipment_id: int) -> None:
 
 
 def delete_multiple(equipment_ids: list[int]) -> tuple[int, list[dict]]:
-    """Delete multiple equipment items. Returns (deleted_count, skipped_items)."""
     deleted = 0
     skipped = []
     for eid in equipment_ids:

@@ -1,39 +1,36 @@
-"""Database schema definition and connection management.
+"""Database schema definition and connection management for PostgreSQL."""
 
-Handles table creation, index creation, migration, and SQLite connection configuration.
-"""
+import os
 
-import sqlite3
-from pathlib import Path
-
-DB_PATH = Path(__file__).parent / "database.db"
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 _CREATE_TABLES = """
 CREATE TABLE IF NOT EXISTS equipment (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    asset_code      TEXT    UNIQUE NOT NULL,
-    name            TEXT    NOT NULL,
-    category        TEXT    DEFAULT '',
-    location        TEXT    DEFAULT '',
-    status          TEXT    NOT NULL DEFAULT 'Available',
-    condition       TEXT    DEFAULT 'Good',
+    id              SERIAL PRIMARY KEY,
+    asset_code      TEXT UNIQUE NOT NULL,
+    name            TEXT NOT NULL,
+    category        TEXT DEFAULT '',
+    location        TEXT DEFAULT '',
+    status          TEXT NOT NULL DEFAULT 'Available',
+    condition       TEXT DEFAULT 'Good',
     quantity        INTEGER NOT NULL DEFAULT 1,
-    notes           TEXT    DEFAULT '',
+    notes           TEXT DEFAULT '',
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS borrow_history (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    id                  SERIAL PRIMARY KEY,
     equipment_id        INTEGER NOT NULL,
-    borrower_name       TEXT    NOT NULL,
-    borrower_phone      TEXT    DEFAULT '',
-    borrow_date         TEXT    NOT NULL,
-    expected_return_date TEXT   NOT NULL,
-    actual_return_date  TEXT    DEFAULT NULL,
-    notes               TEXT    DEFAULT '',
-    asset_code          TEXT    DEFAULT '',
-    equipment_name      TEXT    DEFAULT '',
+    borrower_name       TEXT NOT NULL,
+    borrower_phone      TEXT DEFAULT '',
+    borrow_date         TEXT NOT NULL,
+    expected_return_date TEXT NOT NULL,
+    actual_return_date  TEXT DEFAULT NULL,
+    notes               TEXT DEFAULT '',
+    asset_code          TEXT DEFAULT '',
+    equipment_name      TEXT DEFAULT '',
     created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -45,55 +42,31 @@ CREATE INDEX IF NOT EXISTS idx_borrow_equipment_id ON borrow_history(equipment_i
 CREATE INDEX IF NOT EXISTS idx_borrow_active       ON borrow_history(actual_return_date);
 """
 
-_MIGRATE_BORROW_HISTORY = """
-CREATE TABLE IF NOT EXISTS _borrow_history_new (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-    equipment_id        INTEGER NOT NULL,
-    borrower_name       TEXT    NOT NULL,
-    borrower_phone      TEXT    DEFAULT '',
-    borrow_date         TEXT    NOT NULL,
-    expected_return_date TEXT   NOT NULL,
-    actual_return_date  TEXT    DEFAULT NULL,
-    notes               TEXT    DEFAULT '',
-    asset_code          TEXT    DEFAULT '',
-    equipment_name      TEXT    DEFAULT '',
-    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
 
-INSERT INTO _borrow_history_new
-    (id, equipment_id, borrower_name, borrow_date, expected_return_date,
-     actual_return_date, notes, asset_code, equipment_name, created_at)
-SELECT id, equipment_id, borrower_name, borrow_date, expected_return_date,
-       actual_return_date, notes, asset_code, equipment_name, created_at
-FROM borrow_history;
-
-DROP TABLE borrow_history;
-ALTER TABLE _borrow_history_new RENAME TO borrow_history;
-"""
-
-
-def _needs_migration(conn: sqlite3.Connection) -> bool:
-    """Check if borrow_history table needs migration (missing borrower_phone column)."""
-    cursor = conn.execute("PRAGMA table_info(borrow_history)")
-    columns = [row[1] for row in cursor.fetchall()]
-    return "borrower_phone" not in columns
-
-
-def get_connection() -> sqlite3.Connection:
-    """Create a new SQLite connection with Row factory."""
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.row_factory = sqlite3.Row
+def get_connection():
+    dsn = os.environ.get("DATABASE_URL")
+    if not dsn:
+        raise RuntimeError(
+            "DATABASE_URL environment variable not set. "
+            "Create a .env file with DATABASE_URL=postgresql://... "
+            "or set it via Streamlit Community Cloud secrets."
+        )
+    conn = psycopg2.connect(dsn)
     return conn
 
 
-def init_db() -> None:
-    """Create tables, indexes, and run any necessary schema migrations."""
+def _execute_sql(conn, script: str):
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        for statement in script.split(";"):
+            stmt = statement.strip()
+            if stmt:
+                cur.execute(stmt + ";")
+
+
+def init_db():
     conn = get_connection()
     try:
-        conn.executescript(_CREATE_TABLES)
-        if _needs_migration(conn):
-            conn.executescript(_MIGRATE_BORROW_HISTORY)
-            conn.executescript(_CREATE_TABLES)
+        _execute_sql(conn, _CREATE_TABLES)
         conn.commit()
     finally:
         conn.close()

@@ -2,6 +2,9 @@ import streamlit as st
 from datetime import date, timedelta
 
 from services import equipment_service, borrow_service
+from utils.styling import apply_full_width
+
+apply_full_width()
 
 st.title("📦 Equipment")
 
@@ -68,7 +71,7 @@ equipment_list = equipment_service.get_all_equipment(**filters)
 # --- Equipment Table ---
 STATUS_ICONS = {
     "Available": "🟢 Available",
-    "Borrowed": "🔵 Borrowed",
+    "Borrowed": "🔴 Borrowed",
     "Maintenance": "🟡 Maintenance",
 }
 

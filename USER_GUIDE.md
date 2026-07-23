@@ -38,7 +38,7 @@ The **Lab Equipment Manager** is a lightweight web application designed for univ
 
 | Benefit | Description |
 |---------|-------------|
-| **Zero configuration** | Uses SQLite — no database server needed |
+| **Shared database** | Uses PostgreSQL (Neon) — all users see the same data |
 | **Single dependency** | Only requires Python and Streamlit |
 | **Fast to deploy** | Run locally on any computer with Python installed |
 | **Browser-based** | Access through any modern web browser |
@@ -619,7 +619,7 @@ The Equipment table uses emoji badges to visually distinguish Status and Conditi
 | Icon | Status | Meaning |
 |------|--------|---------|
 | 🟢 | Available | Equipment is in storage and can be borrowed |
-| 🔵 | Borrowed | Equipment is currently loaned out |
+| 🔴 | Borrowed | Equipment is currently loaned out |
 | 🟡 | Maintenance | Equipment is being serviced or repaired |
 
 **Condition Icons:**

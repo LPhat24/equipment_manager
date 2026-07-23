@@ -1,22 +1,20 @@
 """Borrow history table data access operations."""
 
-import sqlite3
-
 from database.db import fetch_all, fetch_one, insert, update
 
 
-def find_by_id(record_id: int) -> sqlite3.Row | None:
-    return fetch_one("SELECT * FROM borrow_history WHERE id = ?", (record_id,))
+def find_by_id(record_id: int) -> dict | None:
+    return fetch_one("SELECT * FROM borrow_history WHERE id = %s", (record_id,))
 
 
-def find_active_by_equipment(equipment_id: int) -> sqlite3.Row | None:
+def find_active_by_equipment(equipment_id: int) -> dict | None:
     return fetch_one(
-        "SELECT * FROM borrow_history WHERE equipment_id = ? AND actual_return_date IS NULL",
+        "SELECT * FROM borrow_history WHERE equipment_id = %s AND actual_return_date IS NULL",
         (equipment_id,),
     )
 
 
-def find_all_active() -> list[sqlite3.Row]:
+def find_all_active() -> list[dict]:
     return fetch_all(
         """SELECT bh.id, bh.equipment_id, bh.borrower_name, bh.borrower_phone,
                   bh.borrow_date, bh.expected_return_date, bh.actual_return_date,
@@ -30,14 +28,14 @@ def find_all_active() -> list[sqlite3.Row]:
     )
 
 
-def find_by_equipment(equipment_id: int) -> list[sqlite3.Row]:
+def find_by_equipment(equipment_id: int) -> list[dict]:
     return fetch_all(
-        "SELECT * FROM borrow_history WHERE equipment_id = ? ORDER BY borrow_date DESC",
+        "SELECT * FROM borrow_history WHERE equipment_id = %s ORDER BY borrow_date DESC",
         (equipment_id,),
     )
 
 
-def find_all() -> list[sqlite3.Row]:
+def find_all() -> list[dict]:
     return fetch_all(
         """SELECT bh.id, bh.equipment_id, bh.borrower_name, bh.borrower_phone,
                   bh.borrow_date, bh.expected_return_date, bh.actual_return_date,
@@ -56,7 +54,7 @@ def insert_record(data: dict) -> int:
 
 def mark_returned(record_id: int, actual_return_date: str) -> int:
     return update(
-        "UPDATE borrow_history SET actual_return_date = ? WHERE id = ?",
+        "UPDATE borrow_history SET actual_return_date = %s WHERE id = %s",
         (actual_return_date, record_id),
     )
 

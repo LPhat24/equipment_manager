@@ -4,8 +4,11 @@ import io
 
 from database.schema import init_db
 from services import equipment_service
+from utils.styling import apply_full_width
 
 DB_PASSWORD = "admin123"
+
+apply_full_width()
 
 st.title("⚙️ Settings")
 

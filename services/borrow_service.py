@@ -1,6 +1,5 @@
 """Borrow and return workflow — validation, atomic status transitions."""
 
-import sqlite3
 from datetime import date
 
 from database import equipment_repo, borrow_repo
@@ -48,12 +47,12 @@ def borrow_equipment(
         "equipment_name": equipment["name"],
     }
 
-    with get_db() as conn:
-        cursor = conn.execute(
+    with get_db() as cur:
+        cur.execute(
             """INSERT INTO borrow_history
                (equipment_id, borrower_name, borrower_phone, borrow_date,
                 expected_return_date, notes, asset_code, equipment_name)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
             (
                 record_data["equipment_id"],
                 record_data["borrower_name"],
@@ -65,11 +64,12 @@ def borrow_equipment(
                 record_data["equipment_name"],
             ),
         )
-        conn.execute(
-            "UPDATE equipment SET status = 'Borrowed', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        new_id = cur.fetchone()["id"]
+        cur.execute(
+            "UPDATE equipment SET status = 'Borrowed', updated_at = CURRENT_TIMESTAMP WHERE id = %s",
             (equipment_id,),
         )
-        return cursor.lastrowid
+        return new_id
 
 
 def return_equipment(record_id: int) -> None:
@@ -81,22 +81,22 @@ def return_equipment(record_id: int) -> None:
 
     today = date.today().isoformat()
 
-    with get_db() as conn:
-        conn.execute(
-            "UPDATE borrow_history SET actual_return_date = ? WHERE id = ?",
+    with get_db() as cur:
+        cur.execute(
+            "UPDATE borrow_history SET actual_return_date = %s WHERE id = %s",
             (today, record_id),
         )
-        conn.execute(
-            "UPDATE equipment SET status = 'Available', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        cur.execute(
+            "UPDATE equipment SET status = 'Available', updated_at = CURRENT_TIMESTAMP WHERE id = %s",
             (record["equipment_id"],),
         )
 
 
-def get_active_borrows() -> list[sqlite3.Row]:
+def get_active_borrows() -> list[dict]:
     return borrow_repo.find_all_active()
 
 
-def get_active_borrow_for(equipment_id: int) -> sqlite3.Row | None:
+def get_active_borrow_for(equipment_id: int) -> dict | None:
     return borrow_repo.find_active_by_equipment(equipment_id)
 
 
@@ -108,7 +108,6 @@ def borrow_multiple(
     expected_return_date: str,
     notes: str = "",
 ) -> tuple[int, list[dict]]:
-    """Borrow multiple equipment items. Returns (borrowed_count, skipped_items)."""
     borrowed = 0
     skipped = []
     for eid in equipment_ids:

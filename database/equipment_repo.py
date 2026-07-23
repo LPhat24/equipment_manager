@@ -1,20 +1,18 @@
 """Equipment table data access operations."""
 
-import sqlite3
-
 from database.db import fetch_all, fetch_one, insert, update
 
 
-def find_all() -> list[sqlite3.Row]:
+def find_all() -> list[dict]:
     return fetch_all("SELECT * FROM equipment ORDER BY asset_code")
 
 
-def find_by_id(equipment_id: int) -> sqlite3.Row | None:
-    return fetch_one("SELECT * FROM equipment WHERE id = ?", (equipment_id,))
+def find_by_id(equipment_id: int) -> dict | None:
+    return fetch_one("SELECT * FROM equipment WHERE id = %s", (equipment_id,))
 
 
-def find_by_asset_code(asset_code: str) -> sqlite3.Row | None:
-    return fetch_one("SELECT * FROM equipment WHERE asset_code = ?", (asset_code,))
+def find_by_asset_code(asset_code: str) -> dict | None:
+    return fetch_one("SELECT * FROM equipment WHERE asset_code = %s", (asset_code,))
 
 
 def insert_equipment(data: dict) -> int:
@@ -22,13 +20,13 @@ def insert_equipment(data: dict) -> int:
 
 
 def update_equipment(equipment_id: int, data: dict) -> int:
-    set_clause = ", ".join(f"{key} = ?" for key in data)
-    sql = f"UPDATE equipment SET {set_clause} WHERE id = ?"
+    set_clause = ", ".join(f"{key} = %s" for key in data)
+    sql = f"UPDATE equipment SET {set_clause} WHERE id = %s"
     return update(sql, (*data.values(), equipment_id))
 
 
 def delete_equipment(equipment_id: int) -> int:
-    return update("DELETE FROM equipment WHERE id = ?", (equipment_id,))
+    return update("DELETE FROM equipment WHERE id = %s", (equipment_id,))
 
 
 def find_distinct_categories() -> list[str]:
@@ -54,21 +52,21 @@ def find_filtered(
     status: str | None = None,
     location: str | None = None,
     search: str | None = None,
-) -> list[sqlite3.Row]:
+) -> list[dict]:
     conditions = []
     params: list = []
 
     if category:
-        conditions.append("category = ?")
+        conditions.append("category = %s")
         params.append(category)
     if status:
-        conditions.append("status = ?")
+        conditions.append("status = %s")
         params.append(status)
     if location:
-        conditions.append("location = ?")
+        conditions.append("location = %s")
         params.append(location)
     if search:
-        conditions.append("(name LIKE ? OR asset_code LIKE ? OR notes LIKE ?)")
+        conditions.append("(name LIKE %s OR asset_code LIKE %s OR notes LIKE %s)")
         term = f"%{search}%"
         params.extend([term, term, term])
 

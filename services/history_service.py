@@ -1,18 +1,16 @@
 """History queries and statistics for dashboard and reporting."""
 
-import sqlite3
-
 from database import equipment_repo, borrow_repo
 
 
-def get_equipment_history(equipment_id: int) -> list[sqlite3.Row]:
+def get_equipment_history(equipment_id: int) -> list[dict]:
     equipment = equipment_repo.find_by_id(equipment_id)
     if not equipment:
         raise ValueError("Equipment not found")
     return borrow_repo.find_by_equipment(equipment_id)
 
 
-def get_all_history() -> list[sqlite3.Row]:
+def get_all_history() -> list[dict]:
     return borrow_repo.find_all()
 
 
