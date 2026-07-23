@@ -1,20 +1,40 @@
 """Generic database access utilities for PostgreSQL.
 
-Provides connection context management and thin wrappers for
+Provides a shared connection pool and thin wrappers for
 common SQL operations (SELECT, INSERT, UPDATE, DELETE).
 """
 
+import os
 from contextlib import contextmanager
 
-import psycopg2
+from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 
-from database.schema import get_connection
+_pool = None
+
+
+def _get_pool():
+    global _pool
+    if _pool is None:
+        dsn = os.environ.get("DATABASE_URL")
+        if not dsn:
+            raise RuntimeError(
+                "DATABASE_URL environment variable not set. "
+                "Create a .env file with DATABASE_URL=postgresql://... "
+                "or set it via Streamlit Community Cloud secrets."
+            )
+        _pool = pool.ThreadedConnectionPool(
+            minconn=1,
+            maxconn=5,
+            dsn=dsn,
+        )
+    return _pool
 
 
 @contextmanager
 def get_db():
-    conn = get_connection()
+    p = _get_pool()
+    conn = p.getconn()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     try:
         yield cur
@@ -24,7 +44,7 @@ def get_db():
         raise
     finally:
         cur.close()
-        conn.close()
+        p.putconn(conn)
 
 
 def fetch_one(sql: str, params: tuple = ()) -> dict | None:
