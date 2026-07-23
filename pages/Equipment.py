@@ -255,7 +255,7 @@ else:
 
         if borrowable:
             with st.form("bulk_borrow_form", clear_on_submit=False):
-                st.markdown("**Borrow Details** (shared for all items, 1 each)")
+                st.markdown("**Borrow Details**")
                 borrower_name = st.text_input("Borrower Name *")
                 borrower_phone = st.text_input("Borrower Phone *")
                 bc1, bc2 = st.columns(2)
@@ -266,15 +266,33 @@ else:
                     expected_return = st.date_input("Expected Return Date", value=min(date.today() + timedelta(days=7), max_return), max_value=max_return)
                 notes = st.text_area("Notes", height=68)
 
+                st.markdown("**Select quantity for each item:**")
+                for item in borrowable:
+                    ic1, ic2 = st.columns([4, 1])
+                    with ic1:
+                        st.markdown(f"`{item['asset_code']}` — {item['name']} ({item['available_quantity']} avail)")
+                    with ic2:
+                        st.number_input(
+                            "Qty",
+                            min_value=1,
+                            max_value=item["available_quantity"],
+                            value=1,
+                            key=f"bulk_qty_{item['id']}",
+                            label_visibility="collapsed",
+                        )
+
                 if st.form_submit_button(f"Confirm Borrow {len(borrowable)} Equipment", type="primary"):
                     if len(borrower_name.strip()) < 2:
                         st.error("Name must be at least 2 characters.")
                     elif len(borrower_phone.strip().replace("-", "").replace(" ", "")) < 8:
                         st.error("Phone must be at least 8 digits.")
                     else:
-                        ids_to_borrow = [item["id"] for item in borrowable]
+                        equipment_map = {
+                            item["id"]: st.session_state[f"bulk_qty_{item['id']}"]
+                            for item in borrowable
+                        }
                         borrowed, skipped = borrow_service.borrow_multiple(
-                            ids_to_borrow,
+                            equipment_map,
                             borrower_name,
                             borrower_phone,
                             borrow_date.isoformat(),

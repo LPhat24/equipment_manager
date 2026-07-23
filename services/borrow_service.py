@@ -117,21 +117,20 @@ def get_active_borrows_for(equipment_id: int) -> list[dict]:
 
 
 def borrow_multiple(
-    equipment_ids: list[int],
+    equipment_map: dict[int, int],
     borrower_name: str,
     borrower_phone: str,
     borrow_date: str,
     expected_return_date: str,
     notes: str = "",
-    borrow_quantity: int = 1,
 ) -> tuple[int, list[dict]]:
     borrowed = 0
     skipped = []
-    for eid in equipment_ids:
+    for eid, qty in equipment_map.items():
         try:
             borrow_equipment(
                 eid, borrower_name, borrower_phone,
-                borrow_date, expected_return_date, notes, borrow_quantity,
+                borrow_date, expected_return_date, notes, qty,
             )
             borrowed += 1
         except ValueError as e:
