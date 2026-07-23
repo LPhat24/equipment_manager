@@ -27,7 +27,9 @@ def find_all_active() -> list[dict]:
                   bh.borrow_quantity, bh.borrow_date, bh.expected_return_date,
                   bh.actual_return_date, bh.notes,
                   COALESCE(bh.asset_code, e.asset_code, '') AS asset_code,
-                  COALESCE(bh.equipment_name, e.name, '') AS equipment_name
+                  COALESCE(bh.equipment_name, e.name, '') AS equipment_name,
+                  COALESCE(e.category, '') AS category,
+                  COALESCE(e.location, '') AS location
            FROM borrow_history bh
            LEFT JOIN equipment e ON bh.equipment_id = e.id
            WHERE bh.actual_return_date IS NULL

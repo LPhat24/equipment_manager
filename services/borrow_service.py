@@ -116,6 +116,23 @@ def get_active_borrows_for(equipment_id: int) -> list[dict]:
     return borrow_repo.find_all_active_by_equipment(equipment_id)
 
 
+def return_multiple(record_ids: list[int]) -> tuple[int, list[dict]]:
+    returned = 0
+    skipped = []
+    for rid in record_ids:
+        try:
+            return_equipment(rid)
+            returned += 1
+        except ValueError as e:
+            record = borrow_repo.find_by_id(rid)
+            if record:
+                skipped.append({
+                    "asset_code": record["asset_code"],
+                    "reason": str(e),
+                })
+    return returned, skipped
+
+
 def borrow_multiple(
     equipment_map: dict[int, int],
     borrower_name: str,
