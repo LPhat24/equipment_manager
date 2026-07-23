@@ -100,7 +100,7 @@ available_with_stock = [item for item in available if item["available_quantity"]
 if not available_with_stock:
     st.info("No equipment currently available to borrow.")
 else:
-    with st.form("borrow_form", clear_on_submit=True):
+    with st.form("borrow_form", clear_on_submit=False):
         equip_options = [
             f"{row['asset_code']} — {row['name']} ({row['available_quantity']}/{row['quantity']} available"
             + (f", {row['location']}" if row["location"] else "")

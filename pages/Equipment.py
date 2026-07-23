@@ -11,7 +11,7 @@ st.title("📦 Equipment")
 # --- Add Equipment (always visible at top) ---
 st.markdown("---")
 with st.expander("➕ Add New Equipment", expanded=False):
-    with st.form("add_equipment_form", clear_on_submit=True):
+    with st.form("add_equipment_form", clear_on_submit=False):
         fc1, fc2 = st.columns(2)
         with fc1:
             asset_code = st.text_input("Asset Code *")
@@ -145,7 +145,7 @@ else:
         col_d.metric("Available", f"{selected['available_quantity']} / {selected['quantity']}")
 
         if computed_status == "Available":
-            with st.form("borrow_form", clear_on_submit=True):
+            with st.form("borrow_form", clear_on_submit=False):
                 st.markdown("**Borrow Equipment**")
                 borrower_name = st.text_input("Borrower Name *")
                 borrower_phone = st.text_input("Borrower Phone *")
