@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS borrow_history (
     equipment_id        INTEGER NOT NULL,
     borrower_name       TEXT NOT NULL,
     borrower_phone      TEXT DEFAULT '',
+    borrow_quantity     INTEGER NOT NULL DEFAULT 1,
     borrow_date         TEXT NOT NULL,
     expected_return_date TEXT NOT NULL,
     actual_return_date  TEXT DEFAULT NULL,
@@ -40,6 +41,8 @@ CREATE INDEX IF NOT EXISTS idx_equipment_location ON equipment(location);
 
 CREATE INDEX IF NOT EXISTS idx_borrow_equipment_id ON borrow_history(equipment_id);
 CREATE INDEX IF NOT EXISTS idx_borrow_active       ON borrow_history(actual_return_date);
+
+ALTER TABLE borrow_history ADD COLUMN IF NOT EXISTS borrow_quantity INTEGER NOT NULL DEFAULT 1;
 """
 
 

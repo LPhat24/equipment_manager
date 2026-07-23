@@ -9,7 +9,14 @@ def find_by_id(record_id: int) -> dict | None:
 
 def find_active_by_equipment(equipment_id: int) -> dict | None:
     return fetch_one(
-        "SELECT * FROM borrow_history WHERE equipment_id = %s AND actual_return_date IS NULL",
+        "SELECT * FROM borrow_history WHERE equipment_id = %s AND actual_return_date IS NULL ORDER BY borrow_date LIMIT 1",
+        (equipment_id,),
+    )
+
+
+def find_all_active_by_equipment(equipment_id: int) -> list[dict]:
+    return fetch_all(
+        "SELECT * FROM borrow_history WHERE equipment_id = %s AND actual_return_date IS NULL ORDER BY borrow_date",
         (equipment_id,),
     )
 
@@ -17,8 +24,8 @@ def find_active_by_equipment(equipment_id: int) -> dict | None:
 def find_all_active() -> list[dict]:
     return fetch_all(
         """SELECT bh.id, bh.equipment_id, bh.borrower_name, bh.borrower_phone,
-                  bh.borrow_date, bh.expected_return_date, bh.actual_return_date,
-                  bh.notes,
+                  bh.borrow_quantity, bh.borrow_date, bh.expected_return_date,
+                  bh.actual_return_date, bh.notes,
                   COALESCE(bh.asset_code, e.asset_code, '') AS asset_code,
                   COALESCE(bh.equipment_name, e.name, '') AS equipment_name
            FROM borrow_history bh
@@ -38,8 +45,8 @@ def find_by_equipment(equipment_id: int) -> list[dict]:
 def find_all() -> list[dict]:
     return fetch_all(
         """SELECT bh.id, bh.equipment_id, bh.borrower_name, bh.borrower_phone,
-                  bh.borrow_date, bh.expected_return_date, bh.actual_return_date,
-                  bh.notes,
+                  bh.borrow_quantity, bh.borrow_date, bh.expected_return_date,
+                  bh.actual_return_date, bh.notes,
                   COALESCE(bh.asset_code, e.asset_code, '') AS asset_code,
                   COALESCE(bh.equipment_name, e.name, '') AS equipment_name
            FROM borrow_history bh
@@ -67,4 +74,13 @@ def count_active() -> int:
     row = fetch_one(
         "SELECT COUNT(*) AS cnt FROM borrow_history WHERE actual_return_date IS NULL"
     )
+    return row["cnt"] if row else 0
+
+
+def count_active_borrows_for(cur, equipment_id: int) -> int:
+    cur.execute(
+        "SELECT COUNT(*) AS cnt FROM borrow_history WHERE equipment_id = %s AND actual_return_date IS NULL",
+        (equipment_id,),
+    )
+    row = cur.fetchone()
     return row["cnt"] if row else 0

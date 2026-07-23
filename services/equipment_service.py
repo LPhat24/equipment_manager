@@ -12,15 +12,20 @@ def get_all_equipment(
     locations: list[str] | None = None,
     search: str | None = None,
 ) -> list[dict]:
-    return equipment_repo.find_filtered(
+    items = equipment_repo.find_filtered(
         categories=categories, statuses=statuses, locations=locations, search=search
     )
+    avail = equipment_repo.get_available_quantities_bulk()
+    for item in items:
+        item["available_quantity"] = avail.get(item["id"], item["quantity"])
+    return items
 
 
 def get_equipment(equipment_id: int) -> dict:
     item = equipment_repo.find_by_id(equipment_id)
     if not item:
         raise ValueError("Equipment not found")
+    item["available_quantity"] = equipment_repo.get_available_quantity(equipment_id)
     return item
 
 
@@ -97,8 +102,8 @@ def delete_equipment(equipment_id: int) -> None:
     if not existing:
         raise ValueError("Equipment not found")
 
-    active = borrow_repo.find_active_by_equipment(equipment_id)
-    if active:
+    available = equipment_repo.get_available_quantity(equipment_id)
+    if available < existing["quantity"]:
         raise ValueError("Cannot delete — this equipment has active borrows")
 
     equipment_repo.delete_equipment(equipment_id)
@@ -111,8 +116,8 @@ def delete_multiple(equipment_ids: list[int]) -> tuple[int, list[dict]]:
         existing = equipment_repo.find_by_id(eid)
         if not existing:
             continue
-        active = borrow_repo.find_active_by_equipment(eid)
-        if active:
+        available = equipment_repo.get_available_quantity(eid)
+        if available < existing["quantity"]:
             skipped.append({"asset_code": existing["asset_code"], "name": existing["name"]})
         else:
             equipment_repo.delete_equipment(eid)

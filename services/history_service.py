@@ -17,18 +17,29 @@ def get_all_history() -> list[dict]:
 def get_statistics() -> dict[str, int]:
     all_items = equipment_repo.find_all()
     total_quantity = sum(item["quantity"] for item in all_items)
+    avail = equipment_repo.get_available_quantities_bulk()
 
-    status_counts = {"Available": 0, "Borrowed": 0, "Maintenance": 0}
+    available_items = 0
+    borrowed_items = 0
+    maintenance_items = 0
+    total_available_qty = 0
+
     for item in all_items:
-        status = item["status"]
-        if status in status_counts:
-            status_counts[status] += 1
+        available_qty = avail.get(item["id"], item["quantity"])
+        total_available_qty += available_qty
+        if item["status"] == "Maintenance":
+            maintenance_items += 1
+        elif available_qty == 0:
+            borrowed_items += 1
+        else:
+            available_items += 1
 
     return {
         "total_items": len(all_items),
         "total_quantity": total_quantity,
-        "available": status_counts["Available"],
-        "borrowed": status_counts["Borrowed"],
-        "maintenance": status_counts["Maintenance"],
+        "available": available_items,
+        "borrowed": borrowed_items,
+        "maintenance": maintenance_items,
+        "total_available_qty": total_available_qty,
         "active_borrows": borrow_repo.count_active(),
     }

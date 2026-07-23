@@ -83,16 +83,31 @@ CONDITION_ICONS = {
     "Damaged": "🔴 Damaged",
 }
 
+
+def _compute_status(item):
+    if item["status"] == "Maintenance":
+        return "Maintenance"
+    return "Available" if item["available_quantity"] > 0 else "Borrowed"
+
+
 if not equipment_list:
     st.info("No equipment found. Use the form above to add your first item.")
 else:
     table_data = [dict(row) for row in equipment_list]
-    display_cols = ["asset_code", "name", "category", "location", "status", "condition", "quantity", "notes"]
-    display_data = [{k: row.get(k, "") for k in display_cols} for row in table_data]
 
-    for row in display_data:
-        row["status"] = STATUS_ICONS.get(row["status"], row["status"])
-        row["condition"] = CONDITION_ICONS.get(row["condition"], row["condition"])
+    display_data = []
+    for row in table_data:
+        computed = _compute_status(row)
+        display_data.append({
+            "asset_code": row["asset_code"],
+            "name": row["name"],
+            "category": row["category"],
+            "location": row["location"],
+            "status": STATUS_ICONS.get(computed, computed),
+            "condition": CONDITION_ICONS.get(row["condition"], row["condition"]),
+            "available": f"{row['available_quantity']}/{row['quantity']}",
+            "notes": row["notes"],
+        })
 
     display_df = st.dataframe(
         display_data,
@@ -103,7 +118,7 @@ else:
             "location": st.column_config.TextColumn("Location", width="small"),
             "status": st.column_config.TextColumn("Status", width="small"),
             "condition": st.column_config.TextColumn("Condition", width="small"),
-            "quantity": st.column_config.NumberColumn("Qty", width="small"),
+            "available": st.column_config.TextColumn("Available", width="small"),
             "notes": st.column_config.TextColumn("Notes", width="medium"),
         },
         selection_mode="multi-row",
@@ -118,20 +133,28 @@ else:
     if len(selected_rows) == 1:
         selected_idx = selected_rows[0]
         selected = equipment_list[selected_idx]
+        computed_status = _compute_status(selected)
 
         st.markdown("---")
         st.subheader(f"{selected['asset_code']} — {selected['name']}")
 
-        col_a, col_b, col_c = st.columns(3)
-        col_a.metric("Status", selected["status"])
+        col_a, col_b, col_c, col_d = st.columns(4)
+        col_a.metric("Status", STATUS_ICONS.get(computed_status, computed_status))
         col_b.metric("Location", selected["location"] or "—")
         col_c.metric("Condition", selected["condition"] or "—")
+        col_d.metric("Available", f"{selected['available_quantity']} / {selected['quantity']}")
 
-        if selected["status"] == "Available":
+        if computed_status == "Available":
             with st.form("borrow_form", clear_on_submit=True):
                 st.markdown("**Borrow Equipment**")
                 borrower_name = st.text_input("Borrower Name *")
                 borrower_phone = st.text_input("Borrower Phone *")
+                borrow_qty = st.number_input(
+                    "Quantity to borrow",
+                    min_value=1,
+                    max_value=selected["available_quantity"],
+                    value=1,
+                )
                 form_col1, form_col2 = st.columns(2)
                 with form_col1:
                     borrow_date = st.date_input("Borrow Date", value=date.today())
@@ -154,27 +177,34 @@ else:
                                 borrow_date=borrow_date.isoformat(),
                                 expected_return_date=expected_return.isoformat(),
                                 notes=notes,
+                                borrow_quantity=int(borrow_qty),
                             )
                             st.success("Equipment borrowed successfully!")
                             st.rerun()
                         except ValueError as e:
                             st.error(str(e))
 
-        elif selected["status"] == "Borrowed":
-            active = borrow_service.get_active_borrow_for(selected["id"])
-            if active:
-                st.info(
-                    f"**Borrowed by:** {active['borrower_name']}  |  "
-                    f"**Since:** {active['borrow_date']}  |  "
-                    f"**Expected return:** {active['expected_return_date']}"
-                )
-            if st.button("Return Equipment", type="primary"):
-                try:
-                    borrow_service.return_equipment(active["id"])
-                    st.success("Equipment returned successfully!")
-                    st.rerun()
-                except ValueError as e:
-                    st.error(str(e))
+        elif computed_status == "Borrowed":
+            active_borrows = borrow_service.get_active_borrows_for(selected["id"])
+            if active_borrows:
+                st.markdown("**Active Borrows:**")
+                for rec in active_borrows:
+                    bc1, bc2 = st.columns([5, 1])
+                    with bc1:
+                        st.info(
+                            f"**{rec['borrower_name']}** — qty {rec['borrow_quantity']}  |  "
+                            f"Since: {rec['borrow_date']}  |  Due: {rec['expected_return_date']}"
+                        )
+                    with bc2:
+                        if st.button("Return", key=f"ret_{rec['id']}", type="primary"):
+                            try:
+                                borrow_service.return_equipment(rec["id"])
+                                st.success("Returned successfully!")
+                                st.rerun()
+                            except ValueError as e:
+                                st.error(str(e))
+            else:
+                st.info("All copies returned.")
 
         else:
             st.warning("This equipment is currently under maintenance — no actions available.")
@@ -183,9 +213,9 @@ else:
         st.markdown("---")
         st.subheader(f"Delete {selected['asset_code']}")
 
-        has_active = borrow_service.get_active_borrow_for(selected["id"])
+        has_active = selected["available_quantity"] < selected["quantity"]
         if has_active:
-            st.warning("Cannot delete — this equipment has active borrows. Return it first.")
+            st.warning("Cannot delete — this equipment has active borrows. Return all copies first.")
         else:
             st.info("Borrow history for this equipment will be preserved after deletion.")
             confirm = st.checkbox("I confirm I want to delete this equipment permanently")
@@ -208,7 +238,7 @@ else:
         borrowable = []
         borrow_blocked = []
         for item in selected_items:
-            if item["status"] == "Available":
+            if item["available_quantity"] > 0:
                 borrowable.append(item)
             else:
                 borrow_blocked.append(item)
@@ -216,16 +246,16 @@ else:
         if borrowable:
             st.markdown("**Items available to borrow:**")
             for item in borrowable:
-                st.markdown(f"  ✅ `{item['asset_code']}` — {item['name']}")
+                st.markdown(f"  ✅ `{item['asset_code']}` — {item['name']} ({item['available_quantity']}/{item['quantity']} available)")
 
         if borrow_blocked:
             st.markdown("**Skipped (not available):**")
             for item in borrow_blocked:
-                st.markdown(f"  ❌ `{item['asset_code']}` — {item['name']} ({item['status']})")
+                st.markdown(f"  ❌ `{item['asset_code']}` — {item['name']} (0/{item['quantity']} available)")
 
         if borrowable:
             with st.form("bulk_borrow_form", clear_on_submit=False):
-                st.markdown("**Borrow Details** (shared for all items)")
+                st.markdown("**Borrow Details** (shared for all items, 1 each)")
                 borrower_name = st.text_input("Borrower Name *")
                 borrower_phone = st.text_input("Borrower Phone *")
                 bc1, bc2 = st.columns(2)
@@ -269,8 +299,7 @@ else:
         deletable = []
         delete_blocked = []
         for item in selected_items:
-            active = borrow_service.get_active_borrow_for(item["id"])
-            if active:
+            if item["available_quantity"] < item["quantity"]:
                 delete_blocked.append(item)
             else:
                 deletable.append(item)

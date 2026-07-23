@@ -47,6 +47,29 @@ def delete_all() -> int:
     return update("DELETE FROM equipment")
 
 
+def get_available_quantity(equipment_id: int) -> int:
+    row = fetch_one(
+        """SELECT e.quantity - COALESCE(SUM(bh.borrow_quantity), 0) AS available
+           FROM equipment e
+           LEFT JOIN borrow_history bh ON bh.equipment_id = e.id AND bh.actual_return_date IS NULL
+           WHERE e.id = %s
+           GROUP BY e.quantity""",
+        (equipment_id,),
+    )
+    return row["available"] if row else 0
+
+
+def get_available_quantities_bulk() -> dict[int, int]:
+    rows = fetch_all(
+        """SELECT e.id,
+                  e.quantity - COALESCE(SUM(bh.borrow_quantity), 0) AS available
+           FROM equipment e
+           LEFT JOIN borrow_history bh ON bh.equipment_id = e.id AND bh.actual_return_date IS NULL
+           GROUP BY e.id, e.quantity"""
+    )
+    return {row["id"]: row["available"] for row in rows}
+
+
 def find_filtered(
     categories: list[str] | None = None,
     statuses: list[str] | None = None,

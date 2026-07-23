@@ -31,6 +31,7 @@ else:
             "equipment_name": record["equipment_name"],
             "borrower": record["borrower_name"],
             "phone": record["borrower_phone"],
+            "qty": record["borrow_quantity"],
             "borrowed_since": record["borrow_date"],
             "expected_return": record["expected_return_date"],
             "days_overdue": days_overdue,
@@ -43,7 +44,7 @@ else:
         st.warning(f"{overdue_count} item(s) overdue — return requested!")
 
     display = [
-        {k: r[k] for k in ["asset_code", "equipment_name", "borrower", "phone", "borrowed_since", "expected_return", "days_overdue", "overdue"]}
+        {k: r[k] for k in ["asset_code", "equipment_name", "borrower", "phone", "qty", "borrowed_since", "expected_return", "days_overdue", "overdue"]}
         for r in rows
     ]
     st.dataframe(
@@ -53,6 +54,7 @@ else:
             "equipment_name": st.column_config.TextColumn("Equipment", width="medium"),
             "borrower": st.column_config.TextColumn("Borrower", width="medium"),
             "phone": st.column_config.TextColumn("Phone", width="small"),
+            "qty": st.column_config.NumberColumn("Qty", width="small"),
             "borrowed_since": st.column_config.TextColumn("Since", width="small"),
             "expected_return": st.column_config.TextColumn("Due", width="small"),
             "days_overdue": st.column_config.TextColumn("Days Overdue", width="small"),
@@ -67,7 +69,7 @@ else:
     st.subheader("📥 Return Equipment")
 
     borrow_options = [
-        f"{r['asset_code']} — {r['equipment_name']} ({r['borrower_name']})"
+        f"{r['asset_code']} — {r['equipment_name']} ({r['borrower_name']}, qty {r['borrow_quantity']})"
         for r in active_borrows
     ]
     borrow_id_map = {
@@ -93,22 +95,33 @@ st.subheader("📦 Borrow Equipment")
 
 available = equipment_service.get_all_equipment(statuses=["Available"])
 
-if not available:
+available_with_stock = [item for item in available if item["available_quantity"] > 0]
+
+if not available_with_stock:
     st.info("No equipment currently available to borrow.")
 else:
     with st.form("borrow_form", clear_on_submit=True):
         equip_options = [
-            f"{row['asset_code']} — {row['name']} ({row['location']})"
-            if row["location"]
-            else f"{row['asset_code']} — {row['name']}"
-            for row in available
+            f"{row['asset_code']} — {row['name']} ({row['available_quantity']}/{row['quantity']} available"
+            + (f", {row['location']}" if row["location"] else "")
+            + ")"
+            for row in available_with_stock
         ]
         equip_id_map = {
-            opt: available[i]["id"]
+            opt: available_with_stock[i]["id"]
+            for i, opt in enumerate(equip_options)
+        }
+        equip_avail_map = {
+            opt: available_with_stock[i]["available_quantity"]
             for i, opt in enumerate(equip_options)
         }
 
         selected_equip = st.selectbox("Equipment *", equip_options, index=None, placeholder="Select equipment...")
+
+        borrow_qty = 1
+        if selected_equip:
+            max_avail = equip_avail_map[selected_equip]
+            borrow_qty = st.number_input("Quantity to borrow", min_value=1, max_value=max_avail, value=1)
 
         borrower_name = st.text_input("Borrower Name *")
         borrower_phone = st.text_input("Borrower Phone *")
@@ -117,7 +130,8 @@ else:
         with fc1:
             borrow_date = st.date_input("Borrow Date", value=date.today())
         with fc2:
-            expected_return = st.date_input("Expected Return Date", value=date.today() + timedelta(days=7))
+            max_return = borrow_date + timedelta(days=90)
+            expected_return = st.date_input("Expected Return Date", value=min(date.today() + timedelta(days=7), max_return), max_value=max_return)
 
         notes = st.text_area("Notes", height=68)
 
@@ -137,6 +151,7 @@ else:
                         borrow_date=borrow_date.isoformat(),
                         expected_return_date=expected_return.isoformat(),
                         notes=notes,
+                        borrow_quantity=int(borrow_qty),
                     )
                     st.success("Equipment borrowed successfully!")
                     st.rerun()
