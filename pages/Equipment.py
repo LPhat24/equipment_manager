@@ -191,10 +191,13 @@ else:
                 for rec in active_borrows:
                     bc1, bc2 = st.columns([5, 1])
                     with bc1:
-                        st.info(
+                        info_text = (
                             f"**{rec['borrower_name']}** — qty {rec['borrow_quantity']}  |  "
                             f"Since: {rec['borrow_date']}  |  Due: {rec['expected_return_date']}"
                         )
+                        if rec["notes"]:
+                            info_text += f"  |  📝 {rec['notes']}"
+                        st.info(info_text)
                     with bc2:
                         if st.button("Return", key=f"ret_{rec['id']}", type="primary"):
                             try:

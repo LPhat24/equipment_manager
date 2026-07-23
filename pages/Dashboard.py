@@ -100,6 +100,7 @@ else:
             "Due": record["expected_return_date"],
             "Returned": record["actual_return_date"] or "—",
             "Status": status,
+            "Notes": record["notes"] or "—",
         })
 
     st.dataframe(
@@ -114,6 +115,7 @@ else:
             "Due": st.column_config.TextColumn("Due", width="small"),
             "Returned": st.column_config.TextColumn("Returned", width="small"),
             "Status": st.column_config.TextColumn("Status", width="small"),
+            "Notes": st.column_config.TextColumn("Notes", width="medium"),
         },
         use_container_width=True,
         hide_index=True,

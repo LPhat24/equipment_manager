@@ -36,6 +36,7 @@ else:
             "expected_return": record["expected_return_date"],
             "days_overdue": days_overdue,
             "overdue": "⚠ Overdue" if status == "Overdue" else "",
+            "notes": record["notes"] or "",
             "_id": record["id"],
         })
 
@@ -44,7 +45,7 @@ else:
         st.warning(f"{overdue_count} item(s) overdue — return requested!")
 
     display = [
-        {k: r[k] for k in ["asset_code", "equipment_name", "borrower", "phone", "qty", "borrowed_since", "expected_return", "days_overdue", "overdue"]}
+        {k: r[k] for k in ["asset_code", "equipment_name", "borrower", "phone", "qty", "borrowed_since", "expected_return", "days_overdue", "overdue", "notes"]}
         for r in rows
     ]
     st.dataframe(
@@ -59,6 +60,7 @@ else:
             "expected_return": st.column_config.TextColumn("Due", width="small"),
             "days_overdue": st.column_config.TextColumn("Days Overdue", width="small"),
             "overdue": st.column_config.TextColumn("", width="small"),
+            "notes": st.column_config.TextColumn("Notes", width="medium"),
         },
         use_container_width=True,
         hide_index=True,
