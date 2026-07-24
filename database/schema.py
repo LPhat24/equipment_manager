@@ -43,6 +43,7 @@ CREATE INDEX IF NOT EXISTS idx_borrow_equipment_id ON borrow_history(equipment_i
 CREATE INDEX IF NOT EXISTS idx_borrow_active       ON borrow_history(actual_return_date);
 
 ALTER TABLE borrow_history ADD COLUMN IF NOT EXISTS borrow_quantity INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE borrow_history ADD COLUMN IF NOT EXISTS original_status TEXT;
 """
 
 

@@ -241,7 +241,7 @@ else:
                         except ValueError as e:
                             st.error(str(e))
 
-        if computed_status in ("Borrowed", "Maintenance"):
+        if computed_status == "Borrowed":
             active_borrows = borrow_service.get_active_borrows_for(selected["id"])
             if active_borrows:
                 st.markdown("**Active Borrows:**")

@@ -65,8 +65,9 @@ def borrow_equipment(
         cur.execute(
             """INSERT INTO borrow_history
                (equipment_id, borrower_name, borrower_phone, borrow_quantity,
-                borrow_date, expected_return_date, notes, asset_code, equipment_name)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                borrow_date, expected_return_date, notes, asset_code, equipment_name,
+                original_status)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
             (
                 equipment_id,
                 borrower_name.strip(),
@@ -77,13 +78,14 @@ def borrow_equipment(
                 notes.strip(),
                 equipment["asset_code"],
                 equipment["name"],
+                equipment["status"] if force else None,
             ),
         )
         new_id = cur.fetchone()["id"]
 
         new_available = available - borrow_quantity
         if force and equipment["status"] == "Maintenance":
-            new_status = equipment["status"]
+            new_status = "Borrowed"
         else:
             new_status = "Available" if new_available > 0 else "Borrowed"
         cur.execute(
@@ -122,8 +124,10 @@ def return_equipment(record_id: int) -> None:
         if not equip:
             raise ValueError("Equipment not found for this borrow record")
         new_available = equip["quantity"] - borrowed_qty
-        if equip["status"] == "Maintenance":
-            new_status = equip["status"]
+        if borrowed_qty > 0:
+            new_status = "Borrowed"
+        elif record["original_status"] == "Maintenance":
+            new_status = "Maintenance"
         else:
             new_status = "Available" if new_available > 0 else "Borrowed"
         cur.execute(
