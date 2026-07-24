@@ -6,6 +6,18 @@ Built for university engineering labs — simple, fast, and easy to maintain.
 
 ---
 
+## For Users
+
+> **No setup required.** Access the tool directly in your browser:
+
+**https://fm-src-feet.streamlit.app/**
+
+- Works on any device with a web browser (computer, tablet, or mobile phone)
+- No installation needed — just open the URL
+- All data is stored in the cloud — shared across all users
+
+---
+
 ## Development Stages
 
 ```
@@ -78,6 +90,8 @@ Version 2.0 — In Progress
 - **Dependencies:** Streamlit, psycopg2, python-dotenv
 
 ## Setup
+
+> **Note: This section is for developers only.** If you just want to use the tool, see [For Users](#for-users) above.
 
 ```bash
 # Clone the repository
@@ -153,6 +167,8 @@ git pull
 
 ## Project Structure
 
+> **Note: This section is for developers only.**
+
 ```
 equipment_manager/
 ├── App.py                          # Main entry point (lowercase on Streamlit Cloud)
@@ -190,6 +206,8 @@ equipment_manager/
 
 ## Architecture
 
+> **Note: This section is for developers only.**
+
 ```
 Presentation Layer (pages/)    →  Streamlit UI only
         ↓
@@ -208,6 +226,8 @@ PostgreSQL (Neon serverless)    →  Cloud-hosted, shared across users
 ---
 
 ## CSV Import Format
+
+> **Note: This section is for developers only.**
 
 When importing equipment via **⚙️ Settings**, use this CSV format:
 
