@@ -146,6 +146,7 @@ def scan_csv_rows(rows: list[dict]) -> tuple[list[dict], list[dict], list[dict]]
     clean_rows = []
     duplicates = []
     errors = []
+    seen_codes = set()
 
     for i, row in enumerate(rows, 1):
         name = row.get("name", "").strip()
@@ -202,6 +203,14 @@ def scan_csv_rows(rows: list[dict]) -> tuple[list[dict], list[dict], list[dict]]
             })
             continue
 
+        if asset_code in seen_codes:
+            errors.append({
+                "row": row,
+                "index": i,
+                "reason": f"Duplicate asset code '{asset_code}' within the CSV file",
+            })
+            continue
+
         existing_by_name = equipment_repo.find_by_name(name)
         if existing_by_name:
             duplicates.append({
@@ -219,6 +228,7 @@ def scan_csv_rows(rows: list[dict]) -> tuple[list[dict], list[dict], list[dict]]
                 })
             else:
                 clean_rows.append({"row": row, "index": i})
+                seen_codes.add(asset_code)
 
     return clean_rows, duplicates, errors
 

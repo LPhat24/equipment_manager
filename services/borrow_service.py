@@ -82,7 +82,10 @@ def borrow_equipment(
         new_id = cur.fetchone()["id"]
 
         new_available = available - borrow_quantity
-        new_status = "Available" if new_available > 0 else "Borrowed"
+        if force and equipment["status"] == "Maintenance":
+            new_status = equipment["status"]
+        else:
+            new_status = "Available" if new_available > 0 else "Borrowed"
         cur.execute(
             "UPDATE equipment SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
             (new_status, equipment_id),
@@ -116,8 +119,13 @@ def return_equipment(record_id: int) -> None:
 
         cur.execute("SELECT * FROM equipment WHERE id = %s", (record["equipment_id"],))
         equip = cur.fetchone()
+        if not equip:
+            raise ValueError("Equipment not found for this borrow record")
         new_available = equip["quantity"] - borrowed_qty
-        new_status = "Available" if new_available > 0 else "Borrowed"
+        if equip["status"] == "Maintenance":
+            new_status = equip["status"]
+        else:
+            new_status = "Available" if new_available > 0 else "Borrowed"
         cur.execute(
             "UPDATE equipment SET status = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
             (new_status, record["equipment_id"]),
