@@ -94,14 +94,13 @@ Version 2.0 — In Progress
 > **Note: This section is for developers only.** If you just want to use the tool, see [For Users](#for-users) above.
 
 ```bash
-# Clone the repository
 git clone https://github.com/LPhat24/equipment_manager.git
-cd equipment_manager
+```
 
-# Install dependencies
+After cloning, open the `equipment_manager` folder on your computer, then open Terminal (or Command Prompt) in that folder and run:
+
+```bash
 pip install -r requirements.txt
-
-# Run the application
 python -m streamlit run App.py
 ```
 
@@ -121,8 +120,9 @@ On first run, go to **⚙️ Settings** and click **Initialize Database**, then 
 
 ```bash
 git clone https://github.com/LPhat24/equipment_manager.git
-cd equipment_manager
 ```
+
+After cloning, open the `equipment_manager` folder on your computer, then open Terminal (or Command Prompt) in that folder.
 
 ### Your Workspace — TESTING/ Folder
 
