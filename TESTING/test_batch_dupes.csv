@@ -1,0 +1,6 @@
+asset_code,name,category,location,status,condition,quantity,notes
+BD-001,Batch Dup Test A,Test Equipment,Lab A Bench 1,Available,Good,1,Should be accepted
+BD-002,Batch Dup Test B,Test Equipment,Lab A Bench 2,Available,Good,1,Should be accepted
+BD-001,Batch Dup Test C,Test Equipment,Lab A Bench 3,Available,Good,1,Duplicate asset code within CSV - should error
+BD-003,Batch Dup Test D,Test Equipment,Lab A Bench 4,Available,Good,1,Should be accepted
+BD-002,Batch Dup Test E,Test Equipment,Lab A Bench 5,Available,Good,1,Duplicate asset code within CSV - should error
