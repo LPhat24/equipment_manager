@@ -242,6 +242,30 @@ The **"➕ Add New Equipment"** form is always visible at the top of the Equipme
 
 > **Tip:** The "Add New Equipment" form is always visible at the top of the Equipment page, even when the equipment list is empty. This is the first thing you will see after navigating to the page.
 
+#### Editing Equipment
+
+1. Click on the equipment row you want to edit in the table
+2. An action panel will appear below the table
+3. Click the **"✏️ Edit Equipment"** expander to open the edit form
+4. All fields are pre-filled with the current values
+5. Modify any fields you want to change:
+
+| Field | Required? | Description |
+|-------|-----------|-------------|
+| Asset Code | **Yes** | Must be unique (can keep the same value) |
+| Name | **Yes** | Equipment name |
+| Category | No | Group classification |
+| Location | No | Storage location |
+| Status | No | Available, Borrowed, or Maintenance |
+| Condition | No | Good, Fair, Poor, or Damaged |
+| Quantity | No | Number of units (cannot reduce below active borrows) |
+| Notes | No | Any additional details |
+
+6. Click **"Save Changes"**
+7. A success message confirms the update
+
+> **Note:** If the equipment has active borrows, you will see a message showing how many copies are currently borrowed. The quantity cannot be reduced below this number until all copies are returned.
+
 #### Borrowing Equipment from This Page
 
 1. Click on an **Available** item in the table

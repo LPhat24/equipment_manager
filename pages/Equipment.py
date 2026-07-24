@@ -144,6 +144,44 @@ else:
         col_c.metric("Condition", selected["condition"] or "—")
         col_d.metric("Available", f"{selected['available_quantity']} / {selected['quantity']}")
 
+        # --- Edit Equipment ---
+        with st.expander("✏️ Edit Equipment", expanded=False):
+            with st.form("edit_equipment_form", clear_on_submit=False):
+                ec1, ec2 = st.columns(2)
+                with ec1:
+                    edit_asset_code = st.text_input("Asset Code *", value=selected["asset_code"])
+                    edit_name = st.text_input("Name *", value=selected["name"])
+                    edit_category = st.text_input("Category", value=selected["category"])
+                    edit_location = st.text_input("Location", value=selected["location"])
+                with ec2:
+                    edit_status = st.selectbox("Status", ["Available", "Borrowed", "Maintenance"],
+                                                index=["Available", "Borrowed", "Maintenance"].index(selected["status"]))
+                    edit_condition = st.selectbox("Condition", ["Good", "Fair", "Poor", "Damaged"],
+                                                   index=["Good", "Fair", "Poor", "Damaged"].index(selected["condition"]))
+                    edit_quantity = st.number_input("Quantity", min_value=1, value=selected["quantity"])
+                    edit_notes = st.text_area("Notes", value=selected["notes"], height=82)
+
+                active_borrows = selected["quantity"] - selected["available_quantity"]
+                if active_borrows > 0:
+                    st.info(f"📌 {active_borrows} copy(ies) currently borrowed — quantity cannot be reduced below {active_borrows}")
+
+                if st.form_submit_button("Save Changes", type="primary"):
+                    try:
+                        equipment_service.update_equipment(selected["id"], {
+                            "asset_code": edit_asset_code,
+                            "name": edit_name,
+                            "category": edit_category,
+                            "location": edit_location,
+                            "status": edit_status,
+                            "condition": edit_condition,
+                            "quantity": int(edit_quantity),
+                            "notes": edit_notes,
+                        })
+                        st.success(f"Equipment '{edit_asset_code}' updated successfully!")
+                        st.rerun()
+                    except ValueError as e:
+                        st.error(str(e))
+
         if computed_status == "Available":
             with st.form("borrow_form", clear_on_submit=False):
                 st.markdown("**Borrow Equipment**")

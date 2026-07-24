@@ -78,6 +78,14 @@ def update_equipment(equipment_id: int, data: dict) -> None:
     if not isinstance(quantity, int) or quantity < 1:
         raise ValueError("Quantity must be at least 1")
 
+    available = equipment_repo.get_available_quantity(equipment_id)
+    active_borrows = existing["quantity"] - available
+    if quantity < active_borrows:
+        raise ValueError(
+            f"Cannot reduce quantity below {active_borrows} — "
+            f"{active_borrows} copy(ies) currently borrowed"
+        )
+
     new_asset_code = data.get("asset_code", "").strip()
     if new_asset_code and new_asset_code != existing["asset_code"]:
         duplicate = equipment_repo.find_by_asset_code(new_asset_code)
