@@ -211,6 +211,8 @@ def scan_csv_rows(rows: list[dict]) -> tuple[list[dict], list[dict], list[dict]]
             })
             continue
 
+        seen_codes.add(asset_code)
+
         existing_by_name = equipment_repo.find_by_name(name)
         if existing_by_name:
             duplicates.append({
@@ -228,7 +230,6 @@ def scan_csv_rows(rows: list[dict]) -> tuple[list[dict], list[dict], list[dict]]
                 })
             else:
                 clean_rows.append({"row": row, "index": i})
-                seen_codes.add(asset_code)
 
     return clean_rows, duplicates, errors
 
