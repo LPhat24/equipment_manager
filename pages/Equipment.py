@@ -19,7 +19,7 @@ with st.expander("➕ Add New Equipment", expanded=False):
             category_input = st.text_input("Category")
             location_input = st.text_input("Location")
         with fc2:
-            status_input = st.selectbox("Status", ["Available", "Borrowed", "Maintenance"])
+            status_input = st.selectbox("Status", ["Available", "Maintenance"])
             condition_input = st.selectbox("Condition", ["Good", "Fair", "Poor", "Damaged"])
             quantity = st.number_input("Quantity", min_value=1, value=1)
             notes_input = st.text_area("Notes", height=82)
@@ -154,8 +154,13 @@ else:
                     edit_category = st.text_input("Category", value=selected["category"])
                     edit_location = st.text_input("Location", value=selected["location"])
                 with ec2:
-                    edit_status = st.selectbox("Status", ["Available", "Borrowed", "Maintenance"],
-                                                index=["Available", "Borrowed", "Maintenance"].index(selected["status"]))
+                    if selected["status"] == "Borrowed":
+                        st.selectbox("Status", ["Borrowed"], disabled=True, key="edit_status_disabled")
+                        st.info("📌 Status is set automatically when equipment is returned.")
+                        edit_status = "Borrowed"
+                    else:
+                        edit_status = st.selectbox("Status", ["Available", "Maintenance"],
+                                                    index=["Available", "Maintenance"].index(selected["status"]))
                     edit_condition = st.selectbox("Condition", ["Good", "Fair", "Poor", "Damaged"],
                                                    index=["Good", "Fair", "Poor", "Damaged"].index(selected["condition"]))
                     edit_quantity = st.number_input("Quantity", min_value=1, value=selected["quantity"])

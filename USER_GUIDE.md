@@ -256,7 +256,7 @@ The **"➕ Add New Equipment"** form is always visible at the top of the Equipme
 | Name | **Yes** | Equipment name |
 | Category | No | Group classification |
 | Location | No | Storage location |
-| Status | No | Available, Borrowed, or Maintenance |
+| Status | No | Available or Maintenance (Borrowed is set automatically) |
 | Condition | No | Good, Fair, Poor, or Damaged |
 | Quantity | No | Number of units (cannot reduce below active borrows) |
 | Notes | No | Any additional details |
