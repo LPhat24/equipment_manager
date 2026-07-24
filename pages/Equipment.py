@@ -190,7 +190,9 @@ else:
         show_borrow_form = False
         is_maintenance_borrow = False
 
-        if computed_status == "Available":
+        if selected["available_quantity"] <= 0:
+            st.info("All copies are currently borrowed.")
+        elif computed_status == "Available":
             show_borrow_form = True
         elif computed_status == "Maintenance":
             st.warning("⚠️ This equipment is currently under maintenance. Borrowing is not recommended.")
