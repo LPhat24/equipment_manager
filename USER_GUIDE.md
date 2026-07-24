@@ -565,7 +565,7 @@ This page manages data import/export and database operations.
 
 #### 📥 Import Equipment from CSV
 
-Bulk import equipment from a CSV file.
+Bulk import equipment from a CSV file with automatic duplicate detection.
 
 **Steps:**
 
@@ -575,10 +575,27 @@ Bulk import equipment from a CSV file.
    - Check that required columns exist (`asset_code`, `name`)
    - Show a preview of the first 5 rows
 3. Review the preview to confirm the data looks correct
-4. Click **"Import X record(s)"** to proceed
-5. Results will show:
-   - Number of items successfully imported
+4. Click **"Scan X record(s)"** to check for duplicates
+5. If duplicates are found:
+   - Each duplicate shows the existing equipment info
+   - Choose **"Skip"** to skip the row, or **"Add (+X qty)"** to increase the existing item's quantity
+6. Click **"Import X record(s)"** to import new items and process quantity increases
+7. Results will show:
+   - Number of new items imported
+   - Number of existing items with increased quantity
    - Any rows that were skipped (with error reasons)
+
+**Duplicate Handling:**
+
+When importing, the system checks if an equipment item with the same **name** already exists:
+
+| Scenario | Behavior |
+|----------|----------|
+| Name does not exist | Added as new equipment |
+| Name exists | Shows existing item info — choose to Skip or Add (increase quantity) |
+| Asset code conflicts | Skipped with error message |
+
+> **Note:** When adding to an existing item, the quantity from the CSV is added to the existing quantity. The existing asset code is used (CSV asset code is ignored).
 
 **CSV Format Requirements:**
 
@@ -588,7 +605,7 @@ Bulk import equipment from a CSV file.
 | `name` | **Yes** | Any text |
 | `category` | No | Any text (e.g., "Test Equipment") |
 | `location` | No | Any text (e.g., "Lab A, Bench 1") |
-| `status` | No | "Available", "Borrowed", or "Maintenance" |
+| `status` | No | "Available" or "Maintenance" (Borrowed is set automatically) |
 | `condition` | No | "Good", "Fair", "Poor", or "Damaged" |
 | `quantity` | No | Any positive integer (defaults to 1) |
 | `notes` | No | Any text |

@@ -15,6 +15,15 @@ def find_by_asset_code(asset_code: str) -> dict | None:
     return fetch_one("SELECT * FROM equipment WHERE asset_code = %s", (asset_code,))
 
 
+def find_by_name(name: str) -> dict | None:
+    return fetch_one("SELECT * FROM equipment WHERE name = %s", (name,))
+
+
+def increase_quantity(equipment_id: int, amount: int) -> int:
+    sql = "UPDATE equipment SET quantity = quantity + %s WHERE id = %s"
+    return update(sql, (amount, equipment_id))
+
+
 def insert_equipment(data: dict) -> int:
     return insert("equipment", data)
 

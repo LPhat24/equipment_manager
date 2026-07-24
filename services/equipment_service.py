@@ -139,6 +139,125 @@ def delete_multiple(equipment_ids: list[int]) -> tuple[int, list[dict]]:
     return deleted, skipped
 
 
+def scan_csv_rows(rows: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Pre-scan CSV rows for duplicates before import.
+
+    Returns:
+        clean_rows: list of {row, index} for rows with no conflicts
+        duplicates: list of {row, index, existing} for rows with name duplicates
+    """
+    clean_rows = []
+    duplicates = []
+
+    for i, row in enumerate(rows, 1):
+        name = row.get("name", "").strip()
+        if not name:
+            continue
+
+        existing = equipment_repo.find_by_name(name)
+        if existing:
+            duplicates.append({
+                "row": row,
+                "index": i,
+                "existing": existing,
+            })
+        else:
+            clean_rows.append({"row": row, "index": i})
+
+    return clean_rows, duplicates
+
+
+def import_csv_rows(
+    rows: list[dict],
+    duplicate_ids: list[int] | None = None,
+) -> tuple[int, int, list[str]]:
+    """Import CSV rows with duplicate handling.
+
+    Args:
+        rows: list of {row, index, action} dicts
+        duplicate_ids: list of equipment IDs to increase quantity for
+
+    Returns:
+        (inserted, increased, errors)
+    """
+    inserted = 0
+    increased = 0
+    errors = []
+
+    duplicate_ids = duplicate_ids or []
+
+    for item in rows:
+        row = item["row"]
+        index = item["index"]
+        action = item.get("action", "add")
+
+        name = row.get("name", "").strip()
+        asset_code = row.get("asset_code", "").strip()
+
+        if not name:
+            errors.append(f"Row {index}: Equipment name is required")
+            continue
+
+        if action == "increase":
+            existing = equipment_repo.find_by_id(item.get("existing_id"))
+            if not existing:
+                errors.append(f"Row {index}: Equipment not found")
+                continue
+
+            try:
+                qty = int(row.get("quantity", 1))
+            except (ValueError, TypeError):
+                errors.append(f"Row {index}: Quantity must be a valid number")
+                continue
+
+            if qty < 1:
+                errors.append(f"Row {index}: Quantity must be at least 1")
+                continue
+
+            equipment_repo.increase_quantity(existing["id"], qty)
+            increased += 1
+        else:
+            if not asset_code:
+                errors.append(f"Row {index}: Asset code is required")
+                continue
+
+            if row.get("status") not in VALID_STATUSES:
+                errors.append(f"Row {index}: Invalid status: {row.get('status')}")
+                continue
+            if row.get("condition") not in VALID_CONDITIONS:
+                errors.append(f"Row {index}: Invalid condition: {row.get('condition')}")
+                continue
+
+            try:
+                quantity = int(row.get("quantity", 1))
+            except (ValueError, TypeError):
+                errors.append(f"Row {index}: Quantity must be a valid number")
+                continue
+            if quantity < 1:
+                errors.append(f"Row {index}: Quantity must be at least 1")
+                continue
+
+            existing_code = equipment_repo.find_by_asset_code(asset_code)
+            if existing_code:
+                errors.append(f"Row {index}: Asset code '{asset_code}' already exists")
+                continue
+
+            clean_data = {
+                "asset_code": asset_code,
+                "name": name,
+                "category": row.get("category", "").strip(),
+                "location": row.get("location", "").strip(),
+                "status": row["status"],
+                "condition": row["condition"],
+                "quantity": quantity,
+                "notes": row.get("notes", "").strip(),
+            }
+            equipment_repo.insert_equipment(clean_data)
+            inserted += 1
+
+    return inserted, increased, errors
+
+
 def get_categories() -> list[str]:
     return equipment_repo.find_distinct_categories()
 
