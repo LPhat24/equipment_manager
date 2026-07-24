@@ -187,7 +187,18 @@ else:
                     except ValueError as e:
                         st.error(str(e))
 
+        show_borrow_form = False
+        is_maintenance_borrow = False
+
         if computed_status == "Available":
+            show_borrow_form = True
+        elif computed_status == "Maintenance":
+            st.warning("⚠️ This equipment is currently under maintenance. Borrowing is not recommended.")
+            if st.checkbox("I understand and want to proceed anyway", key=f"maint_{selected['id']}"):
+                show_borrow_form = True
+                is_maintenance_borrow = True
+
+        if show_borrow_form:
             with st.form("borrow_form", clear_on_submit=False):
                 st.markdown("**Borrow Equipment**")
                 borrower_name = st.text_input("Borrower Name *")
@@ -221,13 +232,14 @@ else:
                                 expected_return_date=expected_return.isoformat(),
                                 notes=notes,
                                 borrow_quantity=int(borrow_qty),
+                                force=is_maintenance_borrow,
                             )
                             st.success("Equipment borrowed successfully!")
                             st.rerun()
                         except ValueError as e:
                             st.error(str(e))
 
-        elif computed_status == "Borrowed":
+        if computed_status == "Borrowed":
             active_borrows = borrow_service.get_active_borrows_for(selected["id"])
             if active_borrows:
                 st.markdown("**Active Borrows:**")
@@ -251,9 +263,6 @@ else:
                                 st.error(str(e))
             else:
                 st.info("All copies returned.")
-
-        else:
-            st.warning("This equipment is currently under maintenance — no actions available.")
 
         # --- Single Delete ---
         st.markdown("---")
@@ -282,24 +291,36 @@ else:
         st.subheader(f"📦 Bulk Borrow ({len(selected_items)} items)")
 
         borrowable = []
+        maintenance = []
         borrow_blocked = []
         for item in selected_items:
-            if item["available_quantity"] > 0:
-                borrowable.append(item)
-            else:
+            if item["available_quantity"] <= 0:
                 borrow_blocked.append(item)
+            elif item["status"] == "Maintenance":
+                maintenance.append(item)
+            else:
+                borrowable.append(item)
+
+        if borrow_blocked:
+            st.warning(
+                f"⚠️ {len(borrow_blocked)} item(s) have no available copies and will be skipped:"
+            )
+            for item in borrow_blocked:
+                st.markdown(f"  ❌ `{item['asset_code']}` — {item['name']} (0/{item['quantity']} available)")
 
         if borrowable:
             st.markdown("**Items available to borrow:**")
             for item in borrowable:
                 st.markdown(f"  ✅ `{item['asset_code']}` — {item['name']} ({item['available_quantity']}/{item['quantity']} available)")
 
-        if borrow_blocked:
-            st.markdown("**Skipped (not available):**")
-            for item in borrow_blocked:
-                st.markdown(f"  ❌ `{item['asset_code']}` — {item['name']} (0/{item['quantity']} available)")
+        if maintenance:
+            st.warning(
+                f"⚠️ {len(maintenance)} item(s) are under maintenance and not recommended for borrowing:"
+            )
+            for item in maintenance:
+                st.markdown(f"  🟡 `{item['asset_code']}` — {item['name']} ({item['available_quantity']}/{item['quantity']} available)")
 
-        if borrowable:
+        if borrowable or maintenance:
             with st.form("bulk_borrow_form", clear_on_submit=False):
                 st.markdown("**Borrow Details**")
                 borrower_name = st.text_input("Borrower Name *")
@@ -327,32 +348,58 @@ else:
                             label_visibility="collapsed",
                         )
 
-                if st.form_submit_button(f"Confirm Borrow {len(borrowable)} Equipment", type="primary"):
-                    if len(borrower_name.strip()) < 2:
-                        st.error("Name must be at least 2 characters.")
-                    elif len(borrower_phone.strip().replace("-", "").replace(" ", "")) < 8:
-                        st.error("Phone must be at least 8 digits.")
-                    else:
-                        equipment_map = {
-                            item["id"]: st.session_state[f"bulk_qty_{item['id']}"]
-                            for item in borrowable
-                        }
-                        borrowed, skipped = borrow_service.borrow_multiple(
-                            equipment_map,
-                            borrower_name,
-                            borrower_phone,
-                            borrow_date.isoformat(),
-                            expected_return.isoformat(),
-                            notes,
+                for item in maintenance:
+                    ic1, ic2 = st.columns([4, 1])
+                    with ic1:
+                        st.markdown(f"🟡 `{item['asset_code']}` — {item['name']} ({item['available_quantity']} avail, maintenance)")
+                    with ic2:
+                        st.number_input(
+                            "Qty",
+                            min_value=1,
+                            max_value=item["available_quantity"],
+                            value=1,
+                            key=f"bulk_qty_{item['id']}",
+                            label_visibility="collapsed",
                         )
-                        if borrowed > 0:
-                            st.success(f"Borrowed **{borrowed}** equipment item(s).")
-                        if skipped:
-                            st.warning(
-                                f"{len(skipped)} item(s) skipped: "
-                                + ", ".join(s["asset_code"] for s in skipped)
+
+                include_maintenance = False
+                if maintenance:
+                    include_maintenance = st.checkbox(
+                        "I understand these items are under maintenance and want to include them"
+                    )
+
+                total_borrowable = len(borrowable) + (len(maintenance) if include_maintenance else 0)
+                if total_borrowable > 0:
+                    if st.form_submit_button(f"Confirm Borrow {total_borrowable} Equipment", type="primary"):
+                        if len(borrower_name.strip()) < 2:
+                            st.error("Name must be at least 2 characters.")
+                        elif len(borrower_phone.strip().replace("-", "").replace(" ", "")) < 8:
+                            st.error("Phone must be at least 8 digits.")
+                        else:
+                            equipment_map = {
+                                item["id"]: st.session_state[f"bulk_qty_{item['id']}"]
+                                for item in borrowable
+                            }
+                            if include_maintenance:
+                                for item in maintenance:
+                                    equipment_map[item["id"]] = st.session_state[f"bulk_qty_{item['id']}"]
+                            borrowed, skipped = borrow_service.borrow_multiple(
+                                equipment_map,
+                                borrower_name,
+                                borrower_phone,
+                                borrow_date.isoformat(),
+                                expected_return.isoformat(),
+                                notes,
+                                force=include_maintenance,
                             )
-                        st.rerun()
+                            if borrowed > 0:
+                                st.success(f"Borrowed **{borrowed}** equipment item(s).")
+                            if skipped:
+                                st.warning(
+                                    f"{len(skipped)} item(s) skipped: "
+                                    + ", ".join(s["asset_code"] for s in skipped)
+                                )
+                            st.rerun()
         else:
             st.info("No items available to borrow from the selection.")
 

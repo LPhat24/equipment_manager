@@ -14,6 +14,7 @@ def borrow_equipment(
     expected_return_date: str,
     notes: str = "",
     borrow_quantity: int = 1,
+    force: bool = False,
 ) -> int:
     if not borrower_name.strip():
         raise ValueError("Borrower name is required")
@@ -34,7 +35,7 @@ def borrow_equipment(
     equipment = equipment_repo.find_by_id(equipment_id)
     if not equipment:
         raise ValueError("Equipment not found")
-    if equipment["status"] == "Maintenance":
+    if equipment["status"] == "Maintenance" and not force:
         raise ValueError("Equipment is currently under maintenance")
 
     available = equipment_repo.get_available_quantity(equipment_id)
@@ -140,6 +141,7 @@ def borrow_multiple(
     borrow_date: str,
     expected_return_date: str,
     notes: str = "",
+    force: bool = False,
 ) -> tuple[int, list[dict]]:
     borrowed = 0
     skipped = []
@@ -148,6 +150,7 @@ def borrow_multiple(
             borrow_equipment(
                 eid, borrower_name, borrower_phone,
                 borrow_date, expected_return_date, notes, qty,
+                force=force,
             )
             borrowed += 1
         except ValueError as e:
