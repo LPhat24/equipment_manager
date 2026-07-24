@@ -1,0 +1,6 @@
+asset_code,name,category,location,status,condition,quantity,notes
+RO-001,Line Tracking Robot,Robotics,Lab C Bench 1,Available,Fair,1,Line tracking condition not good
+RO-002,Robot Arm,Robotics,Lab C Bench 2,Available,Fair,1,Control condition not smooth
+EL-001,ATmega32 Learning Circuit,Components,Lab A Bench 1,Maintenance,Poor,1,LCD missing microcontroller pins broken
+EL-002,DIY BLDC Motor Control Circuit,Power,Lab B Bench 1,Available,Good,1,Custom-built motor controller
+EQ-001,Oscilloscope,Test Equipment,Lab A Bench 1,Available,Good,2,This is an existing item - should trigger duplicate warning

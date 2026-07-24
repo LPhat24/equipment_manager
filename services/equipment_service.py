@@ -40,8 +40,11 @@ def add_equipment(data: dict) -> int:
     if data.get("condition") not in VALID_CONDITIONS:
         raise ValueError(f"Invalid condition: {data.get('condition')}")
 
-    quantity = data.get("quantity", 1)
-    if not isinstance(quantity, int) or quantity < 1:
+    try:
+        quantity = int(data.get("quantity", 1))
+    except (ValueError, TypeError):
+        raise ValueError("Quantity must be a valid number")
+    if quantity < 1:
         raise ValueError("Quantity must be at least 1")
 
     existing = equipment_repo.find_by_asset_code(data["asset_code"].strip())
@@ -74,8 +77,11 @@ def update_equipment(equipment_id: int, data: dict) -> None:
     if data.get("condition") not in VALID_CONDITIONS:
         raise ValueError(f"Invalid condition: {data.get('condition')}")
 
-    quantity = data.get("quantity", 1)
-    if not isinstance(quantity, int) or quantity < 1:
+    try:
+        quantity = int(data.get("quantity", 1))
+    except (ValueError, TypeError):
+        raise ValueError("Quantity must be a valid number")
+    if quantity < 1:
         raise ValueError("Quantity must be at least 1")
 
     available = equipment_repo.get_available_quantity(equipment_id)
