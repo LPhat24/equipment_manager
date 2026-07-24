@@ -3,4 +3,13 @@ RO-001,Line Tracking Robot,Robotics,Lab C Bench 1,Available,Fair,1,Line tracking
 RO-002,Robot Arm,Robotics,Lab C Bench 2,Available,Fair,1,Control condition not smooth
 EL-001,ATmega32 Learning Circuit,Components,Lab A Bench 1,Maintenance,Poor,1,LCD missing microcontroller pins broken
 EL-002,DIY BLDC Motor Control Circuit,Power,Lab B Bench 1,Available,Good,1,Custom-built motor controller
-EQ-001,Oscilloscope,Test Equipment,Lab A Bench 1,Available,Good,2,This is an existing item - should trigger duplicate warning
+EQ-001,Oscilloscope,Test Equipment,Lab A Bench 1,Available,Good,2,Existing item - duplicate name
+EQ-002,,Measurement,Lab A Bench 2,Available,Good,4,Missing name - should error
+,Digital Multimeter,Measurement,Lab A Bench 2,Available,Good,4,Missing asset code - should error
+EQ-001,Function Generator,Test Equipment,Lab A Bench 1,Available,Good,1,Duplicate asset code - should error
+FG-001,Function Generator,Test Equipment,Lab A Bench 1,Available,Good,1,Duplicate name with row 8
+PS-001,DC Power Supply,Power,Lab B Bench 1,Online,Good,3,Invalid status - should error
+PS-002,AC Power Supply,Power,Lab B Bench 2,Available,Broken,2,Invalid condition - should error
+TK-001,Soldering Station,Tools,Lab B Bench 3,Available,Good,abc,Invalid quantity - should error
+TK-002,Wire Stripper,Tools,Lab B Bench 4,Available,Good,0,Quantity less than 1 - should error
+MS-001,LCR Meter,Measurement,Lab A Bench 3,Maintenance,Poor,1,Valid new item
