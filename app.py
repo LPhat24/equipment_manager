@@ -33,6 +33,7 @@ st.markdown(
 
 # --- Quick Stats ---
 try:
+    init_db()
     stats = history_service.get_statistics()
 
     col1, col2, col3, col4 = st.columns(4)
@@ -40,12 +41,8 @@ try:
     col2.metric("Available", stats["available"])
     col3.metric("Borrowed", stats["borrowed"])
     col4.metric("Maintenance", stats["maintenance"])
-except Exception:
-    try:
-        init_db()
-        st.info("Database initialized. Navigate to **⚙️ Settings** to load sample data.")
-    except Exception as e:
-        st.error(f"Could not connect to database. Check your DATABASE_URL. Error: {e}")
+except Exception as e:
+    st.error(f"Could not connect to database. Check your DATABASE_URL. Error: {e}")
 
 # --- Overdue Warning ---
 try:
