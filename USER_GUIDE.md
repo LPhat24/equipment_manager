@@ -39,16 +39,50 @@ The **Lab Equipment Manager** is a lightweight web application designed for univ
 | Benefit | Description |
 |---------|-------------|
 | **Shared database** | Uses PostgreSQL (Neon) — all users see the same data |
+| **Cloud access** | Deployed on Streamlit Community Cloud — accessible via browser |
 | **Single dependency** | Only requires Python and Streamlit |
 | **Fast to deploy** | Run locally on any computer with Python installed |
 | **Browser-based** | Access through any modern web browser |
 | **Simple to use** | Clean interface designed for non-technical users |
 
+### What's New in Version 2.0
+
+- **Cloud Database** — PostgreSQL (Neon) replaces SQLite; all users share the same data
+- **Cloud Access** — Deployed on Streamlit Community Cloud; accessible via browser
+- **Borrower Phone** — Phone number required for all borrows
+- **Overdue Page** — Dedicated page with contact list for follow-up
+- **Multi-Select Filters** — Category, Status, Location filters support OR logic
+- **Quantity Borrowing** — Borrow partial copies from multi-copy items
+- **Bulk Operations** — Per-item quantity in bulk borrow; multi-select bulk return with filters
+- **Notes Everywhere** — Borrower notes visible in Dashboard, Borrow & Return, and Equipment
+- **Input Validation** — Name ≥ 2 chars, Phone ≥ 8 digits, 90-day max borrow duration
+- **Better UX** — Form data retained on errors; full-width layout
+- **Performance** — Connection pooling for faster page loads
+
 ---
 
 ## 2. Getting Started — How to Open the Tool
 
-### Prerequisites
+### Access Options
+
+| Method | URL | Who Can Use |
+|--------|-----|-------------|
+| **Cloud (recommended)** | https://fm-src-feet.streamlit.app/ | Anyone with the link |
+| **Local** | `http://localhost:8501` | Only your machine |
+
+### Cloud Access (Recommended)
+
+No setup required — simply open the URL in your browser:
+
+**https://fm-src-feet.streamlit.app/**
+
+The app connects to a shared PostgreSQL database (Neon), so all users see the same data.
+
+### Local Setup
+
+If you need to run the application on your own machine:
+
+#### Prerequisites
 
 You need **Python 3.12** or newer installed on your computer.
 
@@ -60,7 +94,7 @@ python --version
 
 If it shows `Python 3.12.x` or higher, you are ready. If not, download and install Python from [python.org](https://www.python.org/downloads/). **Important:** Check the box "Add python.exe to PATH" during installation.
 
-### First-Time Setup
+#### First-Time Setup
 
 Open a terminal (Command Prompt or PowerShell) and run these commands one by one:
 
@@ -92,9 +126,11 @@ You should see the Lab Equipment Manager home page.
 On your very first run, the database needs to be initialized:
 
 1. Click **⚙️ Settings** in the left sidebar
-2. Click the **"Initialize Database"** button
-3. You will see a success message: "Database initialized — tables are ready."
-4. Click **"Load Sample Data"** to populate the system with 8 example equipment items (optional but recommended for testing)
+2. Enter the password: `admin123`
+3. Click **"Verify"**
+4. Click the **"Initialize Database"** button
+5. You will see a success message: "Database initialized — tables are ready."
+6. Click **"Load Sample Data"** to populate the system with 8 example equipment items (optional but recommended for testing)
 
 ### Starting the Tool (Subsequent Runs)
 
@@ -160,7 +196,7 @@ When you open the Equipment page, you will see a table listing all equipment wit
 | **Location** | Storage location (e.g., Lab A, Bench 1) |
 | **Status** | Current state: Available, Borrowed, or Maintenance |
 | **Condition** | Physical condition: Good, Fair, Poor, or Damaged |
-| **Qty** | Number of units |
+| **Available** | Shows available/total quantity (e.g., "2/3" means 2 of 3 units available) |
 | **Notes** | Additional information |
 
 #### Filtering Equipment
@@ -168,11 +204,11 @@ When you open the Equipment page, you will see a table listing all equipment wit
 Use the filter bar at the top of the page to narrow down results:
 
 1. **Search bar** — Type keywords to search by name, asset code, or notes
-2. **Category dropdown** — Filter by equipment category (e.g., "Test Equipment")
-3. **Status dropdown** — Filter by status (Available, Borrowed, Maintenance)
-4. **Location dropdown** — Filter by storage location
+2. **Category multi-select** — Select one or more categories (OR logic — items matching any selected category are shown)
+3. **Status multi-select** — Select one or more statuses (OR logic)
+4. **Location multi-select** — Select one or more locations (OR logic)
 
-All filters work together. For example, selecting category "Measurement" and status "Available" will show only available measurement equipment.
+All filters work together with AND logic between groups. For example, selecting categories "Measurement" and "Tools" with status "Available" will show available items from either Measurement or Tools.
 
 #### Selecting Equipment
 
@@ -211,38 +247,43 @@ The **"➕ Add New Equipment"** form is always visible at the top of the Equipme
 1. Click on an **Available** item in the table
 2. A borrow form will appear below the table
 3. Fill in:
-   - **Borrower Name** (required) — Name of the person borrowing the equipment
-   - **Borrower Phone** (required) — Contact phone number
+   - **Borrower Name** (required) — Name of the person borrowing the equipment (minimum 2 characters)
+   - **Borrower Phone** (required) — Contact phone number (minimum 8 digits)
+   - **Quantity** — Number of units to borrow (1 to available quantity)
    - **Borrow Date** — Defaults to today
-   - **Expected Return Date** — Defaults to 7 days from today
+   - **Expected Return Date** — Defaults to 7 days from today (maximum 90 days from borrow date)
    - **Notes** (optional) — Any additional information
 4. Click **"Confirm Borrow"**
-5. The equipment status automatically changes to "Borrowed"
+5. The available quantity updates to reflect the borrowed units
+
+> **Validation:** The borrower name must be at least 2 characters. The phone number must contain at least 8 digits (dashes and spaces are ignored). The borrow duration cannot exceed 90 days.
 
 #### Returning Equipment from This Page
 
 1. Click on a **Borrowed** item in the table
 2. You will see information about who currently has the equipment
-3. Click **"Return Equipment"**
-4. The equipment status automatically changes back to "Available"
+3. For multi-copy items, you will see individual **"Return 1"** buttons for each active borrow
+4. Click **"Return 1"** on the specific borrow record you want to return
+5. The available quantity updates to reflect the returned units
 
 #### Borrow Multiple Items (Bulk Borrow)
 
 1. Hold `Ctrl` (or `Shift`) and click multiple rows in the equipment table
 2. A **"📦 Bulk Borrow"** section will appear below the table
 3. The section shows:
-   - ✅ Items available to borrow (status = "Available")
+   - ✅ Items available to borrow (with available quantity)
    - ❌ Items skipped (status = "Borrowed" or "Maintenance")
-4. Fill in the shared borrow details:
-   - **Borrower Name** (required) — applies to all selected items
-   - **Borrower Phone** (required) — applies to all selected items
+4. Each available item has its own **Quantity** selector (1 to available quantity)
+5. Fill in the shared borrow details:
+   - **Borrower Name** (required) — applies to all selected items (minimum 2 characters)
+   - **Borrower Phone** (required) — applies to all selected items (minimum 8 digits)
    - **Borrow Date** — defaults to today
-   - **Expected Return Date** — defaults to 7 days from today
+   - **Expected Return Date** — defaults to 7 days from today (maximum 90 days)
    - **Notes** (optional) — applies to all selected items
-5. Click **"Confirm Borrow X Equipment"**
-6. A success message shows how many items were borrowed and which were skipped
+6. Click **"Confirm Borrow X Equipment"**
+7. A success message shows how many items were borrowed and which were skipped
 
-> **Note:** All selected items are borrowed by the same person with the same dates. If you need different dates or borrowers, borrow items one at a time instead.
+> **Note:** All selected items are borrowed by the same person with the same dates. Each item can have a different quantity. If you need different dates or borrowers, borrow items one at a time instead.
 
 #### Maintenance Items
 
@@ -281,46 +322,71 @@ You can delete **one item at a time** or **multiple items at once**.
 
 ### 4.2 Borrow & Return Page 🔄
 
-This page provides a dedicated view for managing all active borrows.
+This page provides a dedicated view for managing all active borrows with filtering and bulk return capabilities.
+
+#### Filter Bar
+
+At the top of the page, use the filter bar to narrow down active borrows:
+
+| Filter | Description |
+|--------|-------------|
+| **Borrower** | Filter by borrower name (dropdown from existing borrowers) |
+| **Equipment** | Filter by equipment name (dropdown from active borrows) |
+| **Category** | Filter by equipment category (multi-select, OR logic) |
+| **Location** | Filter by equipment location (multi-select, OR logic) |
+
+Filters work together. For example, selecting category "Test Equipment" and location "Lab A" will show only active borrows for Test Equipment in Lab A.
 
 #### Active Borrows Table
 
-The top section shows a table of all currently borrowed equipment:
+The table shows all currently borrowed equipment matching your filters:
 
 | Column | Description |
 |--------|-------------|
+| **Select** | Checkbox for multi-select return |
 | **Asset Code** | Equipment identifier |
 | **Equipment** | Equipment name |
 | **Borrower** | Person who borrowed it |
 | **Phone** | Borrower's contact phone number |
 | **Since** | Date when it was borrowed |
 | **Due** | Expected return date |
+| **Qty** | Number of units borrowed |
 | **Days Overdue** | Number of days past due date (empty if not overdue) |
 | **Overdue** | Shows "⚠ Overdue" if past due date |
+| **Notes** | Borrower notes (if any) |
 
 If any items are overdue, a warning banner appears at the top: **"X item(s) overdue — return requested!"**
 
 #### Returning Equipment
 
-1. Scroll to the **"📥 Return Equipment"** section
-2. Use the dropdown to select the item you want to return (shows asset code, name, and borrower)
-3. Click **"Return Equipment"**
-4. A success message confirms the return
+**Single Return:**
+1. Click on a borrowed row in the table
+2. An individual **"Return 1"** button appears for that borrow record
+3. Click **"Return 1"** to return that specific borrow
+
+**Bulk Return:**
+1. Use the filter bar to narrow down the borrows you want to return
+2. Check the boxes next to the items you want to return (or use **"Select All"**)
+3. Click **"📥 Return Selected"** to return all checked items
+4. Or click **"📥 Return All by Filter"** to return everything currently shown by your filters
+
+> **Note:** Bulk return is useful when a borrower returns multiple items at once, or when clearing all overdue items for a specific category or location.
 
 #### Borrowing Equipment
 
 1. Scroll to the **"📦 Borrow Equipment"** section
 2. Fill in the form:
    - **Equipment** (required) — Select from the dropdown list of available items
-   - **Borrower Name** (required) — Enter the borrower's name
-   - **Borrower Phone** (required) — Enter the borrower's contact phone number
+   - **Quantity** — Number of units to borrow (1 to available quantity)
+   - **Borrower Name** (required) — Enter the borrower's name (minimum 2 characters)
+   - **Borrower Phone** (required) — Enter the borrower's contact phone number (minimum 8 digits)
    - **Borrow Date** — Defaults to today
-   - **Expected Return Date** — Defaults to 7 days from today
+   - **Expected Return Date** — Defaults to 7 days from today (maximum 90 days)
    - **Notes** (optional) — Any additional information
 3. Click **"Confirm Borrow"**
 4. A success message confirms the borrow
 
-> **Note:** Only equipment with status "Available" will appear in the dropdown. If no equipment is available, you will see the message "No equipment currently available to borrow."
+> **Note:** Only equipment with available quantity > 0 will appear in the dropdown. If no equipment is available, you will see the message "No equipment currently available to borrow."
 
 ---
 
@@ -363,7 +429,9 @@ A table showing the 10 most recent borrow records with columns:
 | **Borrowed** | Date borrowed |
 | **Due** | Expected return date |
 | **Returned** | Actual return date (or "—" if not yet returned) |
+| **Qty** | Number of units borrowed |
 | **Status** | Active, Returned, or Overdue |
+| **Notes** | Borrower notes (if any) |
 
 ---
 
@@ -381,8 +449,8 @@ Records are grouped by month in expandable sections. Each section shows the mont
 Each record in the timeline shows:
 
 - **Date and equipment** — e.g., "**2026-07-15** — `EQ-001` Oscilloscope"
-- **Borrower and status** — e.g., "Borrowed by **John** (📞 0123-456-789) | Due 2026-07-22 — 🔵 Active"
-- **Overdue status** — e.g., "Borrowed by **John** (📞 0123-456-789) | Due 2026-07-15 — ⚠ Overdue (**7 days**)"
+- **Borrower and status** — e.g., "Borrowed by **John** (📞 0123-456-789) | Qty: 2 | Due 2026-07-22 — 🔵 Active"
+- **Overdue status** — e.g., "Borrowed by **John** (📞 0123-456-789) | Qty: 1 | Due 2026-07-15 — ⚠ Overdue (**7 days**)"
 - **Notes** — If any notes were recorded, they appear below
 
 #### Status Icons
@@ -427,6 +495,7 @@ The table displays all overdue borrows, sorted by most overdue first:
 | **Phone** | Borrower's contact phone number |
 | **Borrowed** | Date borrowed |
 | **Due** | Expected return date |
+| **Qty** | Number of units borrowed |
 | **Days Overdue** | Number of days past the due date |
 
 If no items are overdue, you will see: "No overdue equipment — all items returned on time."
@@ -445,7 +514,7 @@ The page provides two formats for follow-up:
   Date: 2026-07-22
 
   1. John Doe — 0123-456-789
-     EL-001 Oscilloscope | Due: 2026-07-15 | 7 days overdue
+     EL-001 Oscilloscope (Qty: 2) | Due: 2026-07-15 | 7 days overdue
   ```
 
 **Download for Printing:**
@@ -459,9 +528,9 @@ The page provides two formats for follow-up:
    Generated: 2026-07-22
   =================================================
 
-  Asset Code   Equipment          Borrower        Phone            Due          Days
-  ------------ ------------------ --------------- ---------------- ------------ -----
-  EL-001       Oscilloscope       John Doe        0123-456-789     2026-07-15   7
+  Asset Code   Equipment          Borrower        Phone            Due          Qty    Days
+  ------------ ------------------ --------------- ---------------- ------------ ------ -----
+  EL-001       Oscilloscope       John Doe        0123-456-789     2026-07-15   2      7
   ```
 
 ---
@@ -685,9 +754,10 @@ The status of a borrow record is automatically determined:
 | `borrow_date` | Text | Date the item was borrowed (YYYY-MM-DD) |
 | `expected_return_date` | Text | Date the item is expected back (YYYY-MM-DD) |
 | `actual_return_date` | Text | Date the item was actually returned (NULL if not yet returned) |
+| `borrow_quantity` | Integer | Number of units borrowed (defaults to 1) |
 | `notes` | Text | Any additional notes about the borrow |
 | `created_at` | Timestamp | When the record was created |
 
 ---
 
-*This guide covers version 1.0 of the Lab Equipment Manager.*
+*This guide covers version 2.0 of the Lab Equipment Manager.*
