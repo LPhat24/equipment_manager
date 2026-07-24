@@ -50,29 +50,28 @@ if uploaded:
 
     st.info(f"**{len(rows)}** record(s) found in file. Preview:")
 
-    display_rows = [{k: row.get(k, "") for k in reader.fieldnames} for row in rows[:5]]
+    display_rows = [{k: row.get(k, "") for k in reader.fieldnames} for row in rows]
     st.dataframe(display_rows, use_container_width=True, hide_index=True)
 
-    if len(rows) > 5:
-        st.caption(f"Showing 5 of {len(rows)} rows.")
-
     if st.button(f"Scan {len(rows)} record(s)", type="primary"):
-        clean_rows, duplicates = equipment_service.scan_csv_rows(rows)
+        clean_rows, duplicates, scan_errors = equipment_service.scan_csv_rows(rows)
 
         st.session_state["csv_clean_rows"] = clean_rows
         st.session_state["csv_duplicates"] = duplicates
+        st.session_state["csv_errors"] = scan_errors
         st.session_state["csv_scanned"] = True
         st.rerun()
 
     if st.session_state.get("csv_scanned"):
         clean_rows = st.session_state.get("csv_clean_rows", [])
         duplicates = st.session_state.get("csv_duplicates", [])
+        scan_errors = st.session_state.get("csv_errors", [])
 
         if clean_rows:
-            st.success(f"**{len(clean_rows)}** new item(s) ready to import.")
+            st.success(f"✅ **{len(clean_rows)}** new item(s) ready to import.")
 
         if duplicates:
-            st.warning(f"**{len(duplicates)}** duplicate(s) found — equipment with the same name already exists:")
+            st.warning(f"⚠️ **{len(duplicates)}** duplicate(s) found — equipment with the same name already exists:")
 
             for dup in duplicates:
                 existing = dup["existing"]
@@ -107,29 +106,46 @@ if uploaded:
                             ]
                             st.rerun()
 
+        if scan_errors:
+            st.error(f"❌ **{len(scan_errors)}** row(s) have invalid data and cannot be imported:")
+
+            for err in scan_errors:
+                row = err["row"]
+                idx = err["index"]
+                reason = err["reason"]
+                st.markdown(
+                    f"**Row {idx}:** `{row.get('asset_code', '?')}` {row.get('name', '?')} — "
+                    f"{reason}"
+                )
+
         total_to_import = len(clean_rows)
         if total_to_import > 0:
             if st.button(f"Import {total_to_import} record(s)", type="primary"):
-                inserted, increased, errors = equipment_service.import_csv_rows(clean_rows)
+                inserted, increased, import_errors = equipment_service.import_csv_rows(clean_rows)
 
                 if inserted > 0:
                     st.success(f"Successfully imported **{inserted}** new equipment item(s).")
                 if increased > 0:
                     st.success(f"Successfully increased quantity for **{increased}** existing item(s).")
-                if errors:
-                    for err in errors:
+                if import_errors:
+                    for err in import_errors:
                         st.text(f"  ✗ {err}")
 
                 st.session_state.pop("csv_clean_rows", None)
                 st.session_state.pop("csv_duplicates", None)
+                st.session_state.pop("csv_errors", None)
                 st.session_state.pop("csv_scanned", None)
                 st.rerun()
 
         if not clean_rows and not duplicates:
-            st.info("All duplicates have been handled. Scan again to import.")
+            if scan_errors:
+                st.info("All rows have errors. Fix the CSV and scan again.")
+            else:
+                st.info("All duplicates have been handled. Scan again to import.")
             if st.button("Reset and scan again"):
                 st.session_state.pop("csv_clean_rows", None)
                 st.session_state.pop("csv_duplicates", None)
+                st.session_state.pop("csv_errors", None)
                 st.session_state.pop("csv_scanned", None)
                 st.rerun()
 

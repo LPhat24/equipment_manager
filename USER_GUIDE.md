@@ -565,7 +565,7 @@ This page manages data import/export and database operations.
 
 #### 📥 Import Equipment from CSV
 
-Bulk import equipment from a CSV file with automatic duplicate detection.
+Bulk import equipment from a CSV file with automatic validation and duplicate detection.
 
 **Steps:**
 
@@ -573,17 +573,41 @@ Bulk import equipment from a CSV file with automatic duplicate detection.
 2. The system will:
    - Validate the file encoding (must be UTF-8)
    - Check that required columns exist (`asset_code`, `name`)
-   - Show a preview of the first 5 rows
+   - Show a preview of **all rows** in the file
 3. Review the preview to confirm the data looks correct
-4. Click **"Scan X record(s)"** to check for duplicates
-5. If duplicates are found:
+4. Click **"Scan X record(s)"** to validate all rows
+5. After scanning, rows are categorized into 3 groups:
+
+| Icon | Status | Meaning | Action |
+|------|--------|---------|--------|
+| ✅ | Valid | New item with all fields correct | Ready to import |
+| ⚠️ | Duplicate | Item with same name already exists | Choose Skip or Add |
+| ❌ | Error | Invalid data (missing fields, invalid values) | Cannot import |
+
+6. For duplicate items (⚠️):
    - Each duplicate shows the existing equipment info
    - Choose **"Skip"** to skip the row, or **"Add (+X qty)"** to increase the existing item's quantity
-6. Click **"Import X record(s)"** to import new items and process quantity increases
-7. Results will show:
+7. For error items (❌):
+   - Error messages explain what is wrong (e.g., "Missing asset code", "Invalid status")
+   - These rows **cannot be imported** — fix the CSV and scan again
+8. Click **"Import X record(s)"** to import only valid items
+9. Results will show:
    - Number of new items imported
    - Number of existing items with increased quantity
-   - Any rows that were skipped (with error reasons)
+   - Any rows that failed during import (with error reasons)
+
+**Validation Rules:**
+
+| Field | Required? | Valid Values |
+|-------|-----------|--------------|
+| `name` | **Yes** | Non-empty text |
+| `asset_code` | **Yes** | Non-empty, unique text (e.g., "EQ-001") |
+| `status` | **Yes** | "Available", "Borrowed", or "Maintenance" |
+| `condition` | **Yes** | "Good", "Fair", "Poor", or "Damaged" |
+| `quantity` | **Yes** | Integer >= 1 |
+| `category` | No | Any text (e.g., "Test Equipment") |
+| `location` | No | Any text (e.g., "Lab A, Bench 1") |
+| `notes` | No | Any text |
 
 **Duplicate Handling:**
 
@@ -593,22 +617,9 @@ When importing, the system checks if an equipment item with the same **name** al
 |----------|----------|
 | Name does not exist | Added as new equipment |
 | Name exists | Shows existing item info — choose to Skip or Add (increase quantity) |
-| Asset code conflicts | Skipped with error message |
+| Asset code conflicts | Rejected with error message |
 
 > **Note:** When adding to an existing item, the quantity from the CSV is added to the existing quantity. The existing asset code is used (CSV asset code is ignored).
-
-**CSV Format Requirements:**
-
-| Column | Required? | Valid Values |
-|--------|-----------|--------------|
-| `asset_code` | **Yes** | Any unique text (e.g., "EQ-001") |
-| `name` | **Yes** | Any text |
-| `category` | No | Any text (e.g., "Test Equipment") |
-| `location` | No | Any text (e.g., "Lab A, Bench 1") |
-| `status` | No | "Available" or "Maintenance" (Borrowed is set automatically) |
-| `condition` | No | "Good", "Fair", "Poor", or "Damaged" |
-| `quantity` | No | Any positive integer (defaults to 1) |
-| `notes` | No | Any text |
 
 **Example CSV file:**
 

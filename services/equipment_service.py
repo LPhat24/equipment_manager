@@ -139,32 +139,92 @@ def delete_multiple(equipment_ids: list[int]) -> tuple[int, list[dict]]:
     return deleted, skipped
 
 
-def scan_csv_rows(rows: list[dict]) -> tuple[list[dict], list[dict]]:
-    """Pre-scan CSV rows for duplicates before import.
+def scan_csv_rows(rows: list[dict]) -> tuple[list[dict], list[dict], list[dict]]:
+    """Pre-scan CSV rows for duplicates and validation errors before import.
 
     Returns:
         clean_rows: list of {row, index} for rows with no conflicts
         duplicates: list of {row, index, existing} for rows with name duplicates
+        errors: list of {row, index, reason} for rows with invalid data
     """
     clean_rows = []
     duplicates = []
+    errors = []
 
     for i, row in enumerate(rows, 1):
         name = row.get("name", "").strip()
+        asset_code = row.get("asset_code", "").strip()
+
         if not name:
+            errors.append({
+                "row": row,
+                "index": i,
+                "reason": "Missing equipment name",
+            })
             continue
 
-        existing = equipment_repo.find_by_name(name)
-        if existing:
+        if not asset_code:
+            errors.append({
+                "row": row,
+                "index": i,
+                "reason": "Missing asset code",
+            })
+            continue
+
+        status = row.get("status", "").strip()
+        if status not in VALID_STATUSES:
+            errors.append({
+                "row": row,
+                "index": i,
+                "reason": f"Invalid status: '{status}' (must be Available, Borrowed, or Maintenance)",
+            })
+            continue
+
+        condition = row.get("condition", "").strip()
+        if condition not in VALID_CONDITIONS:
+            errors.append({
+                "row": row,
+                "index": i,
+                "reason": f"Invalid condition: '{condition}' (must be Good, Fair, Poor, or Damaged)",
+            })
+            continue
+
+        try:
+            quantity = int(row.get("quantity", 1))
+            if quantity < 1:
+                errors.append({
+                    "row": row,
+                    "index": i,
+                    "reason": f"Invalid quantity: '{row.get('quantity', '')}' (must be at least 1)",
+                })
+                continue
+        except (ValueError, TypeError):
+            errors.append({
+                "row": row,
+                "index": i,
+                "reason": f"Invalid quantity: '{row.get('quantity', '')}' (must be a valid number)",
+            })
+            continue
+
+        existing_by_name = equipment_repo.find_by_name(name)
+        if existing_by_name:
             duplicates.append({
                 "row": row,
                 "index": i,
-                "existing": existing,
+                "existing": existing_by_name,
             })
         else:
-            clean_rows.append({"row": row, "index": i})
+            existing_by_code = equipment_repo.find_by_asset_code(asset_code)
+            if existing_by_code:
+                errors.append({
+                    "row": row,
+                    "index": i,
+                    "reason": f"Asset code '{asset_code}' already exists",
+                })
+            else:
+                clean_rows.append({"row": row, "index": i})
 
-    return clean_rows, duplicates
+    return clean_rows, duplicates, errors
 
 
 def import_csv_rows(
