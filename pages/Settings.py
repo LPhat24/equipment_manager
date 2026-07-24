@@ -54,7 +54,12 @@ if uploaded:
     st.dataframe(display_rows, use_container_width=True, hide_index=True)
 
     if st.button(f"Scan {len(rows)} record(s)", type="primary"):
-        clean_rows, duplicates, scan_errors = equipment_service.scan_csv_rows(rows)
+        try:
+            init_db()
+            clean_rows, duplicates, scan_errors = equipment_service.scan_csv_rows(rows)
+        except Exception as e:
+            st.error(f"Scan failed: {e}")
+            st.stop()
 
         st.session_state["csv_clean_rows"] = clean_rows
         st.session_state["csv_duplicates"] = duplicates
