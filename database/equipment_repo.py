@@ -108,3 +108,42 @@ def find_filtered(
     where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     sql = f"SELECT * FROM equipment {where} ORDER BY asset_code"
     return fetch_all(sql, tuple(params))
+
+
+def find_filtered_with_availability(
+    categories: list[str] | None = None,
+    statuses: list[str] | None = None,
+    locations: list[str] | None = None,
+    search: str | None = None,
+) -> list[dict]:
+    conditions = []
+    params: list = []
+
+    if categories:
+        placeholders = ", ".join(["%s"] * len(categories))
+        conditions.append(f"e.category IN ({placeholders})")
+        params.extend(categories)
+    if statuses:
+        placeholders = ", ".join(["%s"] * len(statuses))
+        conditions.append(f"e.status IN ({placeholders})")
+        params.extend(statuses)
+    if locations:
+        placeholders = ", ".join(["%s"] * len(locations))
+        conditions.append(f"e.location IN ({placeholders})")
+        params.extend(locations)
+    if search:
+        conditions.append("(e.name LIKE %s OR e.asset_code LIKE %s OR e.notes LIKE %s)")
+        term = f"%{search}%"
+        params.extend([term, term, term])
+
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+    sql = f"""
+        SELECT e.*,
+               e.quantity - COALESCE(SUM(bh.borrow_quantity), 0) AS available_quantity
+        FROM equipment e
+        LEFT JOIN borrow_history bh ON bh.equipment_id = e.id AND bh.actual_return_date IS NULL
+        {where}
+        GROUP BY e.id
+        ORDER BY e.asset_code
+    """
+    return fetch_all(sql, tuple(params))

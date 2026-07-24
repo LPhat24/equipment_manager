@@ -24,7 +24,7 @@ def _get_pool():
                 "or set it via Streamlit Community Cloud secrets."
             )
         _pool = pool.ThreadedConnectionPool(
-            minconn=1,
+            minconn=2,
             maxconn=5,
             dsn=dsn,
         )

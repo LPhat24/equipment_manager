@@ -12,13 +12,9 @@ def get_all_equipment(
     locations: list[str] | None = None,
     search: str | None = None,
 ) -> list[dict]:
-    items = equipment_repo.find_filtered(
+    return equipment_repo.find_filtered_with_availability(
         categories=categories, statuses=statuses, locations=locations, search=search
     )
-    avail = equipment_repo.get_available_quantities_bulk()
-    for item in items:
-        item["available_quantity"] = avail.get(item["id"], item["quantity"])
-    return items
 
 
 def get_equipment(equipment_id: int) -> dict:
